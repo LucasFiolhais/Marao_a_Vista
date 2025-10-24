@@ -88,19 +88,19 @@
 <script setup>
 const alojamentos = [
   {
-    titulo: "Casa do Sol",
+    titulo: "Quarto do Sol",
     descricao: "Vista deslumbrante sobre o vale e piscina privativa.",
     preco: 120,
     imagem: "/images/casa1.jpg",
   },
   {
-    titulo: "Refúgio Verde",
+    titulo: "Quarto Verde",
     descricao: "Ambiente natural e tranquilo, ideal para relaxar.",
     preco: 95,
     imagem: "/images/casa2.jpg",
   },
   {
-    titulo: "Vila Horizonte",
+    titulo: "Quarto Horizonte",
     descricao: "Design moderno e conforto com vistas incríveis.",
     preco: 150,
     imagem: "/images/casa3.jpg",
