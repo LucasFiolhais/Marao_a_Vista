@@ -15,10 +15,19 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ["Inter", "sans-serif"],
             },
+            colors: {
+                primary: "#9faea0",
+                secondary: "#b9bda5",
+                dark: "#616160",
+                accent: "#e6e019",
+      },
         },
     },
 
-    plugins: [forms, typography],
+    plugins: [
+        require("@tailwindcss/forms"),
+        require("@tailwindcss/typography"),
+    ],
 };
