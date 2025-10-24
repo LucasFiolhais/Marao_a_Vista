@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="flex justify-between items-center p-6 bg-white shadow-sm">
       <div class="flex items-center space-x-2">
-        <img src="/images/logo.png" alt="Logo" class="h-8" />
+        <img src="/images/logo.jpg" alt="Logo" class="h-8" />
         <h1 class="text-lg font-semibold text-dark">Alojamento Local</h1>
       </div>
 
