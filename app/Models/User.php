@@ -29,6 +29,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+
     ];
 
     /**
@@ -65,10 +67,4 @@ class User extends Authenticatable
         ];
     }
 
-    protected $fillable = [
-    'name',
-    'email',
-    'password',
-    'is_admin',
-];
 }
