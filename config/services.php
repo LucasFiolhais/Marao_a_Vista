@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'openweather' => [
+    'key' => env('OPENWEATHER_API_KEY'),
+    'city' => env('OPENWEATHER_CITY', 'Peso da Régua'),
+    ],
+
+
 ];
