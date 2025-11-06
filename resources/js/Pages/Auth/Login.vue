@@ -29,11 +29,13 @@ const submit = () => {
         onFinish: () => form.reset('password'),
         onSuccess: (response) => {
             // Salva o token no localStorage após login bem-sucedido
-            localStorage.setItem('auth_token', response.token); 
+            localStorage.setItem('auth_token', response.token);
             console.log('Login bem-sucedido', response);
         },
         onError: (error) => {
+            // Exibe erro de login
             console.error('Erro ao fazer login', error);
+            alert('Erro ao realizar login. Verifique suas credenciais e tente novamente.');
         }
     });
 };
