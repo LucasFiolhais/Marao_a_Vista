@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Models\Alojamento;
 
 /* Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -40,4 +41,13 @@ Route::middleware([
     Route::get('/', fn() => Inertia::render('Admin/Dashboard'))->name('admin.dashboard');
     Route::get('/reservas', fn() => Inertia::render('Admin/ReservasAdmin'))->name('admin.reservas');
     Route::get('/utilizadores', fn() => Inertia::render('Admin/Utilizadores'))->name('admin.utilizadores');
+});
+
+
+Route::get('/alojamentos', function () {
+    // Buscar todos os alojamentos
+    $alojamentos = Alojamento::all(); // Ou qualquer lógica que você queira para buscar os alojamentos
+    return Inertia::render('Alojamentos', [
+        'alojamentos' => $alojamentos,
+    ]);
 });
