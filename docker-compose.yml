@@ -45,6 +45,14 @@ services:
     networks:
       - laravel
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: laravel_mailhog
+    ports:
+        - "8025:8025"
+    networks:
+        - laravel
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: laravel_phpmyadmin
@@ -59,15 +67,13 @@ services:
       PMA_PASSWORD: root
     networks:
       - laravel
+    
+
+
 
 networks:
   laravel:
 
 volumes:
   dbdata:
-
-mailhog:
-  image: mailhog/mailhog
-  ports:
-    - "8025:8025"
 
