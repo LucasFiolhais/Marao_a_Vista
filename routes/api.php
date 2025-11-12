@@ -12,6 +12,7 @@ use App\Http\Controllers\API\ComentarioController;
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\Admin\ComentariosController;
 
+
 //  Rota para obter o utilizador autenticado
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -19,6 +20,9 @@ Route::get('/user', function (Request $request) {
 
 //  API pública - Meteo
 Route::get('/public/meteo', [MeteoController::class, 'index']);
+
+//  Comentários
+Route::apiResource('comentarios', ComentarioController::class);
 
 //  Conversão de moedas
 Route::get('/public/conversao', [CurrencyController::class, 'convert']);
@@ -37,6 +41,7 @@ Route::post('/alojamentos/{id}/available', [ReservaController::class, 'available
 //  Reservas autenticadas
 Route::middleware('auth:sanctum')->group(function() {
     Route::post('/reservas', [ReservaController::class, 'store']);
+     Route::get('/reservas', [ReservaController::class, 'index']);
     //Route::get('/reservas/me', [ReservaController::class, 'myReservations']);
 });
 
@@ -48,10 +53,7 @@ Route::prefix('pagamentos')->group(function () {
 });
 
 
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/reservas', [ReservaController::class, 'store']);
-    Route::get('/reservas', [ReservaController::class, 'index']);
-});
+
 
 Route::get('/public/conversao', [CurrencyController::class, 'convert']);
 

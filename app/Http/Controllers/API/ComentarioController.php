@@ -2,48 +2,46 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\API\Controller;
+use App\Models\Comentario;
+use App\Http\Requests\StoreComentarioRequest;
 use Illuminate\Http\Request;
 
 class ComentarioController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    // 🔹 Listar todos os comentários
     public function index()
     {
-        //
+        return response()->json(Comentario::all());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    // 🔹 Mostrar um comentário específico
+    public function show($id)
     {
-        //
+        return response()->json(Comentario::findOrFail($id));
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    // 🔹 Criar um novo comentário (com validação)
+    public function store(StoreComentarioRequest $request)
     {
-        //
+        $dados = $request->validated();
+        $comentario = Comentario::create($dados);
+        return response()->json($comentario, 201);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    // 🔹 Atualizar um comentário
+    public function update(StoreComentarioRequest $request, $id)
     {
-        //
+        $comentario = Comentario::findOrFail($id);
+        $comentario->update($request->validated());
+        return response()->json($comentario);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    // 🔹 Eliminar um comentário
+    public function destroy($id)
     {
-        //
+        $comentario = Comentario::findOrFail($id);
+        $comentario->delete();
+        return response()->json(['message' => 'Comentário eliminado com sucesso.']);
     }
 }
