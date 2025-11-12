@@ -15,8 +15,11 @@ use App\Models\Alojamento;
 }); */
 
 Route::get('/', function () {
-    return Inertia::render('Home');
-});
+    return Inertia::render('Home', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+    ]);
+    });
 
 Route::get('/reservas', function () {
     return Inertia::render('Reservas');
@@ -42,6 +45,7 @@ Route::middleware([
     Route::get('/reservas', fn() => Inertia::render('Admin/ReservasAdmin'))->name('admin.reservas');
     Route::get('/utilizadores', fn() => Inertia::render('Admin/Utilizadores'))->name('admin.utilizadores');
     Route::get('/comentarios', fn() => Inertia::render('Admin/ComentariosAdmin'))->name('admin.comentarios');
+     Route::get('/alojamento', fn() => Inertia::render('Admin/AlojamentoAdmin'))->name('admin.alojamento');
 });
 
 

@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Actions\Jetstream\DeleteUser;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Fortify\Fortify;
 use Laravel\Jetstream\Jetstream;
 
 class JetstreamServiceProvider extends ServiceProvider
@@ -22,6 +23,12 @@ class JetstreamServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ✅ redirecionar o utilizador após login para a página principal
+        Fortify::redirects('login', '/');
+
+        // (opcional) também redirecionar após registo
+        Fortify::redirects('register', '/login');
+
         $this->configurePermissions();
 
         Jetstream::deleteUsersUsing(DeleteUser::class);
