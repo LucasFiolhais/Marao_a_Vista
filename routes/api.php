@@ -48,4 +48,4 @@ Route::prefix('pagamentos')->group(function () {
     Route::post('/webhook', [PaymentController::class, 'webhook']);
 });
 
->>>>>>> 73af515e923a62dbadb6402fee67fa113bca6724
+

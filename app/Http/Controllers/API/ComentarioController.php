@@ -1,9 +1,8 @@
 <?php
 
+namespace App\Http\Controllers\API;
 
-
-namespace App\Http\Controllers;
-
+use App\Http\Controllers\API\Controller;
 use App\Models\Comentario;
 use App\Http\Requests\StoreComentarioRequest;
 use Illuminate\Http\Request;
@@ -26,23 +25,15 @@ class ComentarioController extends Controller
     public function store(StoreComentarioRequest $request)
     {
         $dados = $request->validated();
-
         $comentario = Comentario::create($dados);
-
         return response()->json($comentario, 201);
     }
 
-    // 🔹 Atualizar um comentário (opcional)
-    public function update(Request $request, $id)
+    // 🔹 Atualizar um comentário
+    public function update(StoreComentarioRequest $request, $id)
     {
         $comentario = Comentario::findOrFail($id);
-
-        $request->validate([
-            'conteudo' => 'sometimes|string|max:1000'
-        ]);
-
-        $comentario->update($request->all());
-
+        $comentario->update($request->validated());
         return response()->json($comentario);
     }
 
@@ -51,7 +42,6 @@ class ComentarioController extends Controller
     {
         $comentario = Comentario::findOrFail($id);
         $comentario->delete();
-
         return response()->json(['message' => 'Comentário eliminado com sucesso.']);
     }
 }
