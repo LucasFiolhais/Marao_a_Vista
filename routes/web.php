@@ -15,11 +15,8 @@ use App\Models\Alojamento;
 }); */
 
 Route::get('/', function () {
-    return Inertia::render('Home', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-    ]);
-    });
+    return Inertia::render('Home');
+});
 
 Route::get('/reservas', function () {
     return Inertia::render('Reservas');
