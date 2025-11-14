@@ -31,15 +31,7 @@
                   <input type="date" id="dataFim" v-model="reserva.dataFim" class="w-full mt-1 p-2 border rounded" required />
                 </div>
               </div>
-<template>
-  <div>
-    <div v-for="item in alojamentos" :key="item.id">
-      <Link :href="`/alojamentos/${item.id}`">
-        <h2>{{ item.titulo }}</h2>
-      </Link>
-    </div>
-  </div>
-</template>
+
               <!-- Verificação de erro no formato das datas -->
               <p v-if="erroDatas" class="text-red-500 text-sm mt-2">A data de fim não pode ser anterior à data de início.</p>
 
@@ -56,6 +48,16 @@
 
   </div>
 </template>
+
+<!-- <template>
+  <div>
+    <div v-for="item in alojamentos" :key="item.id">
+      <Link :href="`/alojamentos/${item.id}`">
+        <h2>{{ item.titulo }}</h2>
+      </Link>
+    </div>
+  </div>
+</template> -->
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
