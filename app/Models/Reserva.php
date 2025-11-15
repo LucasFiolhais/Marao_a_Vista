@@ -6,24 +6,35 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reserva extends Model
 {
-    // Se o nome da tabela for diferente de 'reservas', especifica aqui
-    // protected $table = 'nome_da_tua_tabela';
-
-    // Colunas que podem ser preenchidas via create() ou update()
     protected $fillable = [
         'user_id',
-        'inicio',
-        'fim',
+        'alojamento_id',
+        'checkin',
+        'checkout',
+        'hospedes',
+        'total',
         'estado',
-        'preco_total'
+        'referencia',
+        'observacoes'
     ];
 
-    public static function calcularPreco($inicio, $fim)
+  public static function calcularPreco($inicio, $fim, $alojamentoId)
+{
+    $dias = (new \DateTime($inicio))->diff(new \DateTime($fim))->days;
+    $alojamento = \App\Models\Alojamento::find($alojamentoId);
+    $precoPorNoite = $alojamento ? $alojamento->preco_noite : 100;
+    return $dias * $precoPorNoite;
+}
+
+    public function user()
     {
-        $dias = (new \DateTime($inicio))->diff(new \DateTime($fim))->days;
-        $precoPorNoite = 100; // Podes mudar para um campo vindo do alojamento
-        return $dias * $precoPorNoite;
+        return $this->belongsTo(User::class);
     }
 
+    public function alojamento()
+    {
+        return $this->belongsTo(Alojamento::class);
+    }
 }
+
 
