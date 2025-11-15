@@ -31,6 +31,11 @@ Route::get('/alojamentos/{id}', [AlojamentoController::class, 'show']);
 // Verificar disponibilidade de alojamento (público)
 Route::post('/reservas/available/{alojamentoId}', [ReservaController::class, 'available']);
 
+// Rotas de autenticação (públicas)
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
 // Comentários (públicos - leitura)
 Route::get('/comentarios', [ComentarioController::class, 'index']);
 Route::get('/comentarios/{id}', [ComentarioController::class, 'show']);
@@ -51,7 +56,6 @@ Route::middleware('auth:sanctum')->group(function() {
     // Reservas do utilizador
     Route::prefix('reservas')->group(function() {
         Route::get('/me', [ReservaController::class, 'myReservations']);
-        Route::post('/', [ReservaController::class, 'store']);
         Route::get('/{id}', [ReservaController::class, 'show']);
         Route::put('/{id}', [ReservaController::class, 'update']);
         Route::delete('/{id}', [ReservaController::class, 'destroy']);
@@ -80,11 +84,11 @@ Route::post('/pagamentos/webhook', [PaymentController::class, 'webhook']);
 
 /*
 |--------------------------------------------------------------------------
-| Rotas Admin
+| Rotas Admin - OPÇÃO 1: Sem middleware de role (testa primeiro)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'role:admin'])
+Route::middleware('auth:sanctum')
     ->prefix('admin')
     ->group(function () {
         
@@ -101,6 +105,16 @@ Route::middleware(['auth:sanctum', 'role:admin'])
             Route::patch('/{id}/toggle', [ComentariosController::class, 'toggleAprovado']);
         });
 
-        // Alojamentos Admin (se necessário)
-        // Route::apiResource('alojamentos', AlojamentoController::class)->except(['index', 'show']);
+        // Alojamentos Admin
+        Route::apiResource('alojamentos', AlojamentoController::class)->except(['index', 'show']);
     });
+
+// ⚠️ SE PRECISARES DO MIDDLEWARE 'role:admin', CRIA UM MIDDLEWARE CUSTOMIZADO:
+// php artisan make:middleware EnsureUserIsAdmin
+// Depois adiciona em bootstrap/app.php (Laravel 11+):
+// ->withMiddleware(function (Middleware $middleware) {
+//     $middleware->alias([
+//         'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+//     ]);
+// })
+// E usa: ->middleware(['auth:sanctum', 'admin'])

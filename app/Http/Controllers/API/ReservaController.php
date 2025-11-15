@@ -51,7 +51,7 @@ class ReservaController extends Controller
         }
 
         // Preparar dados
-        $data['user_id'] = auth()->id();
+        $data['user_id'] = auth()->id(); 
         $data['estado'] = 'pendente';
         $data['referencia'] = $this->gerarReferencia();
         $data['total'] = $this->calcularPreco(
