@@ -8,63 +8,64 @@ class EasypayService
 {
     protected $baseURL;
     protected $apiKey;
-    protected $clientID;
+    protected $accountId;
 
-    public function __construct(){
-        $this->baseURL = config('services.easypay.base_url');
-        $this->apiKey = config('services.easypay.api_key');
-        $this->clientID = config('services.easypay.client_id');
+    public function __construct()
+    {
+        $this->baseURL   = config('services.easypay.base_url');
+        $this->apiKey    = config('services.easypay.api_key');
+        $this->accountId = config('services.easypay.account_id'); 
     }
+
     /**
-     * Criar uma nova transação de pagamento.
+     * Criar pagamento Easypay (sandbox)
      */
     public function criarPagamento($reserva)
     {
-        $endpoint = "{$this->baseURL}/payment";
+        $endpoint = "{$this->baseURL}/single";
 
         $response = Http::withHeaders([
-            'clientID' => $this->clientID,
-            'ApiKey' => $this->apiKey,
+            'AccountId' => $this->accountId,
+            'ApiKey'    => $this->apiKey,
             'Content-Type' => 'application/json',
-
         ])->post($endpoint, [
-            'method' => 'mb',
-            'type' => 'sale',
-            'capture' => true,
-            'currency' => 'EUR',
-            'value' => $reserva->preco_total,
-            'customer' => [
-                'name' => $reserva->user->name,
-                'email' => $reserva->user->email,
+            "value" => $reserva->preco_total,
+            "currency" => "EUR",
+            "method" => "mbw", // MBWAY
+            "key" => "reserva-{$reserva->id}",
+            "customer" => [
+                "name"  => $reserva->user->name,
+                "email" => $reserva->user->email,
+                "key"   => "user-{$reserva->user->id}"
             ],
-            'key' => 'reserva-' . $reserva->id,
-            'capture_date' => now()->toDateTimeString(),
-            'sandbox' => true,
+            "sandbox" => true,
+            "redirect_url" => "http://localhost:8080/pagamento/sucesso",
+            "failure_url"  => "http://localhost:8080/pagamento/falha"
         ]);
 
         if ($response->failed()) {
             return [
                 'success' => false,
-                'error' => $response->json(),
+                'error'   => $response->json(),
             ];
         }
 
         return [
             'success' => true,
-            'data' => $response->json(),
+            'data'    => $response->json(),
         ];
     }
 
     /**
-     * Consultar o estado de um pagamento
+     * Verificar estado pagamento
      */
     public function verificarPagamento($paymentKey)
     {
-        $endpoint = "{$this->baseUrl}/payment/{$paymentKey}";
+        $endpoint = "{$this->baseURL}/payment/{$paymentKey}";
 
         $response = Http::withHeaders([
-            'clientId' => $this->clientId,
-            'ApiKey' => $this->apiKey,
+            'AccountId' => $this->accountId,
+            'ApiKey'    => $this->apiKey,
         ])->get($endpoint);
 
         if ($response->failed()) {

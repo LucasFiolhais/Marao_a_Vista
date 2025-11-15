@@ -13,3 +13,6 @@ WORKDIR /var/www
 
 # Evita problemas de permissão comuns
 RUN useradd -G www-data,root -u 1000 laraveluser
+
+RUN docker-php-ext-install opcache
+COPY ./docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
