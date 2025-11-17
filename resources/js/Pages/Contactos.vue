@@ -33,7 +33,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import Navbar from '@/Components/NavBar.vue';  // Importa o componente Navbar
+import Navbar from '../Components/NavBar.vue';  // Importa o componente Navbar
 
 const form = ref({
   name: '',
