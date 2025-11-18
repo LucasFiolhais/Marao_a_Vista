@@ -1,111 +1,105 @@
 <template>
-  <div class="min-h-screen bg-gray-50 text-dark font-sans flex flex-col">
-    <!-- Header -->
-     <navbar />
-    <header class="flex justify-between items-center p-6 bg-white shadow-sm">
-      <div class="flex items-center space-x-2">
-        <img src="/images/logo.jpg" alt="Logo" class="h-8" />
-        <h1 class="text-lg font-semibold text-dark">Alojamento Local</h1>
-      </div>
-    </header>
+  <div class="min-h-screen bg-gray-50 text-gray-800">
+    <Navbar />
 
-    <!-- Contact Section -->
-    <div class="contact-page py-8">
-      <h1 class="text-3xl font-bold mb-4 text-center">sContact Us</h1>
-      <p class="mb-4 text-center">Se tiver alguma dúvida ou precisar de ajuda, não hesite em entrar em contato conosco!</p>
-
-      <!-- Contact Info (Email and Phone) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-center mb-8">
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <img src="/images/icon-email.png" alt="Email" class="h-10 mx-auto mb-4"/>
-          <h3 class="text-xl font-semibold mb-2">Email</h3>
-          <p class="text-gray-600">contato@aloja.local</p>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <img src="/images/icon-phone.png" alt="Phone" class="h-10 mx-auto mb-4"/>
-          <h3 class="text-xl font-semibold mb-2">Telefone</h3>
-          <p class="text-gray-600">(11) 98765-4321</p>
-        </div>
-      </div>
-
-      <!-- Localização (Google Maps Embed) -->
-      <div class="flex justify-center mb-8">
-        <div class="w-full md:w-1/2">
-          <h3 class="text-xl font-semibold mb-4 text-center">Localização</h3>
-          <iframe 
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3002.676697415246!2d-7.716855171163932!3d41.185218297444564!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd3b4d52ed736209%3A0xb627b1bfb26c6889!2sAlojamento%20Local%20Mar%C3%A3o%20%C3%A0%20Vista!5e0!3m2!1spt-PT!2spt!4v1763466055241!5m2!1spt-PT!2spt" 
-            width="100%" 
-            height="450" 
-            style="border:0;" 
-            allowfullscreen="" 
-            loading="lazy" 
-            referrerpolicy="no-referrer-when-downgrade">
-          </iframe>
-        </div>
-      </div>
-
-      <!-- FAQ Section -->
-      <div class="faq-section py-8">
-        <h2 class="text-3xl font-bold mb-4 text-center">FAQ</h2>
-        <div v-for="(item, index) in faq" :key="index" class="faq-item mb-4">
-          <div class="flex justify-between items-center cursor-pointer" @click="toggleFAQ(index)">
-            <span class="text-lg font-medium">{{ item.question }}</span>
-            <span class="text-lg font-semibold text-accent">{{ openFAQ[index] ? "−" : "+" }}</span>
+    <main class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 pt-24"> 
+      
+      <header class="text-center mb-12">
+        <h1 class="text-5xl font-serif font-semibold text-gray-900 mb-2">Contact Us</h1>
+        <p class="text-sm text-gray-600">Se tiver alguma dúvida ou precisar de ajuda, entre em contato conosco.</p>
+      </header>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+        
+        <div class="space-y-6">
+          
+          <div class="bg-white p-6 rounded-lg shadow-md flex items-start space-x-4">
+            <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-1 12H4a2 2 0 01-2-2V6a2 2 0 012-2h16a2 2 0 012 2v12a2 2 0 01-2 2z"></path></svg>
+            <div>
+              <p class="text-xl font-semibold mb-1">Email</p>
+              <p class="text-gray-500 text-sm">contact@example.com</p>
+            </div>
           </div>
-          <div v-if="openFAQ[index]" class="mt-2 text-gray-600">
+          
+          <div class="bg-white p-6 rounded-lg shadow-md flex items-start space-x-4">
+            <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+            <div>
+              <p class="text-xl font-semibold mb-1">Telefone</p>
+              <p class="text-gray-500 text-sm">+351 987 654 321</p>
+            </div>
+          </div>
+          
+          <div class="bg-white p-6 rounded-lg shadow-md flex items-start space-x-4">
+            <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <div>
+              <p class="text-xl font-semibold mb-1">Endereço</p>
+              <p class="text-gray-500 text-sm">Rua Fictícia, 123 - Cidade, País</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white p-3 rounded-lg shadow-md flex items-center justify-center">
+            <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d96075.14651993106!2d-7.926918321521399!3d41.19237886612182!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd3b4d52ed736209%3A0xb627b1bfb26c6889!2sAlojamento%20Local%20Mar%C3%A3o%20%C3%A0%20Vista!5e0!3m2!1spt-PT!2spt!4v1763477925175!5m2!1spt-PT!2spt" 
+                width="100%" 
+                height="384px" 
+                class="w-full h-96 rounded-lg"
+                style="border:0;" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+      </div>
+      
+      <hr class="border-gray-200 my-12" />
+      
+      <section class="text-center mb-12">
+        <h2 class="text-4xl font-serif font-semibold text-gray-900 mb-2">FAQ</h2>
+        <p class="text-sm text-gray-600">Perguntas frequentes para tirar suas dúvidas.</p>
+      </section>
+      
+      <div class="space-y-4">
+        <div 
+          v-for="(item, index) in faqs" 
+          :key="index"
+          class="border border-gray-200 rounded-md cursor-pointer hover:bg-gray-100 transition duration-150 shadow-sm"
+        >
+          <div @click="toggleFAQ(index)" class="p-4 flex justify-between items-center">
+            <span class="font-medium text-gray-700">{{ item.question }}</span>
+            <svg :class="{'rotate-90': item.isOpen}" class="w-5 h-5 text-gray-500 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+          </div>
+          <div v-show="item.isOpen" class="px-4 pb-4 pt-0 text-gray-600 border-t border-gray-100">
             <p>{{ item.answer }}</p>
           </div>
         </div>
       </div>
-    </div>
+      
+    </main>
   </div>
 </template>
 
 <script setup>
-// Importa o ref e computed do Vue
-import { ref } from "vue";
-import Navbar from "../Components/NavBar.vue";  // Não alterado: Importa a navbar
+import { ref } from 'vue';
+import Navbar from '../Components/NavBar.vue'; 
 
-// FAQ
-const faq = [
-  { question: "Whaling can cause oceanic pollution?", answer: "Yes, it's one of the major issues..." },
-  { question: "Whaling can kill marine species?", answer: "Whaling contributes to the decline of marine species..." },
-  { question: "Whaling can hurt tourism?", answer: "Yes, areas known for whale watching can suffer..." },
-  { question: "Whaling is harmful to the ecosystem?", answer: "Indeed, the entire marine ecosystem can be disrupted..." },
-];
+// --- Estado da FAQ ---
+const faqs = ref([
+  { question: 'Qual é o horário de atendimento?', answer: 'Nosso suporte está disponível de segunda a sexta, das 9h às 18h, horário de Lisboa.', isOpen: false },
+  { question: 'Como faço para rastrear meu pedido?', answer: 'Você receberá um email com o código de rastreio assim que o pedido for enviado. O rastreamento pode levar até 24h para ser atualizado.', isOpen: false },
+  { question: 'Posso devolver um produto?', answer: 'Sim, aceitamos devoluções em até 30 dias após o recebimento, desde que o produto esteja na condição original. Consulte nossa política de devolução para mais detalhes.', isOpen: false },
+  { question: 'Quais métodos de pagamento são aceitos?', answer: 'Aceitamos cartões de crédito (Visa, MasterCard, Amex), PayPal e transferência bancária.', isOpen: false }
+]);
 
-const openFAQ = ref(Array(faq.length).fill(false)); // Controlar os FAQ's abertos
-
+// --- Função da FAQ ---
 const toggleFAQ = (index) => {
-  openFAQ.value[index] = !openFAQ.value[index];
+  faqs.value[index].isOpen = !faqs.value[index].isOpen;
 };
 </script>
 
 <style scoped>
-.contact-page {
-  padding: 2rem;
-}
-
-.faq-item {
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 1rem;
-  cursor: pointer;
-}
-
-.faq-item:hover {
-  background-color: #f1f1f1;
-}
-
-.faq-item .text-accent {
-  color: #e6e019;
-}
-
-.bg-primary {
-  background-color: #9faea0;
-}
-
-.bg-secondary {
-  background-color: #b9bda5;
+/* Estilo para replicar a tipografia do título da imagem */
+.font-serif {
+  font-family: Georgia, serif; 
 }
 </style>
