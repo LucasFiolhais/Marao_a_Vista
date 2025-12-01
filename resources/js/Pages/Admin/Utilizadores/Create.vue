@@ -2,13 +2,16 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import axios from '@/axiosBackend'
+import backend from '@/axiosBackend'
+
+// Roles disponíveis (nomes dos roles do Spatie)
+const availableRoles = ['cliente', 'admin']
 
 const form = ref({
   name: '',
   email: '',
   password: '',
-  role: 'cliente', // default
+  roles: ['cliente'], // default: cliente
 })
 
 const errors = ref({})
@@ -19,11 +22,13 @@ const submit = async () => {
   errors.value = {}
 
   try {
-    await axios.post('/admin/utilizadores', {
+    // ANTES: axios.post('/admin/utilizadores', {...})
+    // AGORA: /admin/api/utilizadores (por causa do baseURL)
+    await backend.post('/utilizadores', {
       name: form.value.name,
       email: form.value.email,
       password: form.value.password,
-      role: form.value.role,
+      roles: form.value.roles, // 👈 enviar array de roles
     })
 
     router.visit(route('admin.utilizadores'))
@@ -78,18 +83,27 @@ const submit = async () => {
         </div>
       </div>
 
+      <!-- Roles (Spatie) -->
       <div>
-        <label class="block font-semibold">Role</label>
-        <select
-          v-model="form.role"
-          class="w-full border p-2 rounded"
-          required
-        >
-          <option value="cliente">Cliente</option>
-          <option value="admin">Admin</option>
-        </select>
-        <div v-if="errors.role" class="text-red-600 text-sm mt-1">
-          {{ errors.role[0] }}
+        <label class="block font-semibold mb-1">Papéis (roles)</label>
+
+        <div class="flex flex-wrap gap-3">
+          <label
+            v-for="role in availableRoles"
+            :key="role"
+            class="inline-flex items-center space-x-2"
+          >
+            <input
+              type="checkbox"
+              :value="role"
+              v-model="form.roles"
+            />
+            <span class="capitalize">{{ role }}</span>
+          </label>
+        </div>
+
+        <div v-if="errors.roles" class="text-red-600 text-sm mt-1">
+          {{ errors.roles[0] }}
         </div>
       </div>
 

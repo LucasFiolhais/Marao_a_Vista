@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import axios from '@/axiosBackend'
+import backend from '@/axiosBackend'   // 👈 usar o axiosBackend com baseURL /admin/api
 
 const props = defineProps({
   id: {
@@ -11,11 +11,14 @@ const props = defineProps({
   },
 })
 
+// roles disponíveis (nomes Spatie)
+const availableRoles = ['cliente', 'admin']
+
 const form = ref({
   name: '',
   email: '',
   password: '',
-  role: 'cliente',
+  roles: [], // 👈 array de roles
 })
 
 const errors = ref({})
@@ -27,10 +30,13 @@ const loadUser = async () => {
   errors.value = {}
 
   try {
-    const res = await axios.get(`/admin/utilizadores/${props.id}`)
+    // ANTES: axios.get(`/admin/utilizadores/${props.id}`)
+    // AGORA: vai para /admin/api/utilizadores/{id}
+    const res = await backend.get(`/utilizadores/${props.id}`)
+
     form.value.name = res.data.name
     form.value.email = res.data.email
-    form.value.role = res.data.role || 'cliente'
+    form.value.roles = Array.isArray(res.data.roles) ? res.data.roles : []
   } catch (error) {
     console.error('Erro ao carregar utilizador:', error)
   } finally {
@@ -46,14 +52,17 @@ const submit = async () => {
     const payload = {
       name: form.value.name,
       email: form.value.email,
-      role: form.value.role,
+      roles: form.value.roles, // 👈 envia array de roles
     }
 
     if (form.value.password) {
       payload.password = form.value.password
     }
 
-    await axios.put(`/admin/utilizadores/${props.id}`, payload)
+    // ANTES: axios.put(`/admin/utilizadores/${props.id}`, payload)
+    // AGORA: /admin/api/utilizadores/{id}
+    await backend.put(`/utilizadores/${props.id}`, payload)
+
     router.visit(route('admin.utilizadores'))
   } catch (error) {
     console.error('Erro ao atualizar utilizador:', error)
@@ -110,18 +119,27 @@ onMounted(loadUser)
         </div>
       </div>
 
+      <!-- Roles (Spatie) -->
       <div>
-        <label class="block font-semibold">Role</label>
-        <select
-          v-model="form.role"
-          class="w-full border p-2 rounded"
-          required
-        >
-          <option value="cliente">Cliente</option>
-          <option value="admin">Admin</option>
-        </select>
-        <div v-if="errors.role" class="text-red-600 text-sm mt-1">
-          {{ errors.role[0] }}
+        <label class="block font-semibold mb-1">Papéis (roles)</label>
+
+        <div class="flex flex-wrap gap-3">
+          <label
+            v-for="role in availableRoles"
+            :key="role"
+            class="inline-flex items-center space-x-2"
+          >
+            <input
+              type="checkbox"
+              :value="role"
+              v-model="form.roles"
+            />
+            <span class="capitalize">{{ role }}</span>
+          </label>
+        </div>
+
+        <div v-if="errors.roles" class="text-red-600 text-sm mt-1">
+          {{ errors.roles[0] }}
         </div>
       </div>
 

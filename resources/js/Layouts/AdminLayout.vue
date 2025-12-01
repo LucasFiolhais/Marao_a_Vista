@@ -10,7 +10,7 @@
       <Link :href="route('admin.dashboard')" class="block p-2 hover:bg-gray-200">Dashboard</Link>
         <Link :href="route('admin.reservas')" class="block p-2 hover:bg-gray-200">Reservas</Link>
         <Link :href="route('admin.utilizadores')" class="block p-2 hover:bg-gray-200">Utilizadores</Link>
-        <Link :href="route('admin.alojamento')" class="block p-2 hover:bg-gray-200">Alojamento</Link>
+        <Link :href="route('admin.alojamentos')" class="block p-2 hover:bg-gray-200">Alojamento</Link>
         <Link :href="route('admin.comentarios')" class="block p-2 hover:bg-gray-200">Comentários</Link>
       </nav>
     </aside>

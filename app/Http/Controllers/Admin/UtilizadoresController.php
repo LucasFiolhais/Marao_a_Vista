@@ -10,14 +10,32 @@ class UtilizadoresController extends Controller
 {
     /**
      * LISTAR UTILIZADORES (GET)
+     * Devolve utilizadores + roles do Spatie
      */
     public function index()
     {
-        return User::orderBy('created_at', 'desc')->paginate(10);
+        $users = User::with('roles')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        // Transformar para enviar apenas o necessário (incluindo nomes dos roles)
+        $users->getCollection()->transform(function ($user) {
+            return [
+                'id'         => $user->id,
+                'name'       => $user->name,
+                'email'      => $user->email,
+                'created_at' => $user->created_at,
+                // Collection de strings: ['admin', 'cliente', ...]
+                'roles'      => $user->getRoleNames(),
+            ];
+        });
+
+        return response()->json($users);
     }
 
     /**
      * CRIAR UTILIZADOR (POST)
+     * Cria user e atribui roles do Spatie
      */
     public function store(Request $request)
     {
@@ -25,26 +43,51 @@ class UtilizadoresController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|min:6',
-            'role'     => 'required|in:admin,cliente',
+            // agora é array de roles (nomes Spatie)
+            'roles'    => 'nullable|array',
+            'roles.*'  => 'string|exists:roles,name',
         ]);
 
-        $data['password'] = bcrypt($data['password']);
+        $user = User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => bcrypt($data['password']),
+        ]);
 
-        $user = User::create($data);
+        if (!empty($data['roles'])) {
+            // Atribui/sincroniza roles Spatie
+            $user->syncRoles($data['roles']);
+        }
 
-        return response()->json($user, 201);
+        return response()->json([
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'created_at' => $user->created_at,
+            'roles'      => $user->getRoleNames(),
+        ], 201);
     }
 
     /**
      * MOSTRAR UM UTILIZADOR ESPECÍFICO (GET /id)
+     * Inclui roles do Spatie
      */
     public function show(User $user)
     {
-        return response()->json($user);
+        $user->load('roles');
+
+        return response()->json([
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'created_at' => $user->created_at,
+            'roles'      => $user->getRoleNames(),
+        ]);
     }
 
     /**
      * ATUALIZAR UTILIZADOR (PUT/PATCH /id)
+     * Atualiza dados + roles do Spatie
      */
     public function update(Request $request, User $user)
     {
@@ -52,16 +95,37 @@ class UtilizadoresController extends Controller
             'name'     => 'sometimes|string|max:255',
             'email'    => "sometimes|email|unique:users,email,{$user->id}",
             'password' => 'sometimes|min:6',
-            'role'     => 'required|in:admin,cliente',
+            'roles'    => 'nullable|array',
+            'roles.*'  => 'string|exists:roles,name',
         ]);
 
-        if (isset($data['password'])) {
-            $data['password'] = bcrypt($data['password']);
+        if (array_key_exists('name', $data)) {
+            $user->name = $data['name'];
         }
 
-        $user->update($data);
+        if (array_key_exists('email', $data)) {
+            $user->email = $data['email'];
+        }
 
-        return response()->json($user);
+        if (array_key_exists('password', $data)) {
+            $user->password = bcrypt($data['password']);
+        }
+
+        $user->save();
+
+        // Se o front enviar roles, sincronizamos
+        if (array_key_exists('roles', $data)) {
+            // Se vier [] limpa os roles, se vierem alguns, atualiza
+            $user->syncRoles($data['roles'] ?? []);
+        }
+
+        return response()->json([
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'created_at' => $user->created_at,
+            'roles'      => $user->getRoleNames(),
+        ]);
     }
 
     /**

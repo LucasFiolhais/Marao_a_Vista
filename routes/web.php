@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Models\Alojamento;
 use App\Http\Controllers\Admin\UtilizadoresController;
+use App\Http\Controllers\Admin\AlojamentoController;
+
 
 /* Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -45,72 +47,72 @@ Route::middleware([
     'verified',
     'role:admin', 
 ])
-    ->prefix('admin')          // todas as rotas começam com /admin
-    ->name('admin.')           // todas as rotas começam com admin.
-    ->group(function () {
+->prefix('admin')
+->name('admin.')
+->group(function () {
 
-        // 👉 /admin  (DASHBOARD)
-        Route::get('/', fn () => Inertia::render('Admin/Dashboard'))
-            ->name('dashboard');
-        Route::get('/reservas', fn () => Inertia::render('Admin/RservasAdmin'))
-            ->name('reservas');
-        Route::get('/alojamento', fn () => Inertia::render('Admin/AlojamentoAdmin'))
-            ->name('alojamento');
-        Route::get('/comentarios', fn () => Inertia::render('Admin/ComentariosAdmin'))
-            ->name('comentarios');
+    // ================================
+    //   PÁGINAS INERTIA (VIEW)
+    // ================================
+    Route::get('/', fn () => Inertia::render('Admin/Dashboard'))
+        ->name('dashboard');
+
+    Route::get('/reservas', fn () => Inertia::render('Admin/RservasAdmin'))
+        ->name('reservas');
+
+    Route::get('/comentarios', fn () => Inertia::render('Admin/Comentarios'))
+        ->name('comentarios');
 
 
-        // 👉 /admin/utilizadores  (Página Inertia)
-        Route::get('/utilizadores', fn () => Inertia::render('Admin/Utilizadores/Index'))
-            ->name('utilizadores');
 
-        // 👉 /admin/utilizadores/criar
-        Route::get('/utilizadores/criar', fn () => Inertia::render('Admin/Utilizadores/Create'))
-            ->name('utilizadores.create');
+    // ---------- UTILIZADORES (PAGES) ----------
+    Route::get('/utilizadores', fn () =>
+        Inertia::render('Admin/Utilizadores/Index')
+    )->name('utilizadores');
 
-        // 👉 /admin/utilizadores/{id}/editar
-        Route::get('/utilizadores/{id}/editar', fn ($id) => 
-            Inertia::render('Admin/Utilizadores/Edit', ['id' => $id])
-        )->name('utilizadores.edit');
+    Route::get('/utilizadores/criar', fn () =>
+        Inertia::render('Admin/Utilizadores/Create')
+    )->name('utilizadores.create');
 
-        // Rotas API para utilizadores (para Axios)
-        // 👉 /admin/utilizadores-lista
-        Route::get('/utilizadores-lista', [UtilizadoresController::class, 'index'])
-            ->name('utilizadores.lista');
+    Route::get('/utilizadores/{id}/editar', fn ($id) =>
+        Inertia::render('Admin/Utilizadores/Edit', ['id' => $id])
+    )->name('utilizadores.edit');
 
-        // 👉 /admin/utilizadores  (store)
-        Route::post('/utilizadores', [UtilizadoresController::class, 'store'])
-            ->name('utilizadores.store');
 
-        // 👉 /admin/utilizadores/{user}  (show)
-        Route::get('/utilizadores/{user}', [UtilizadoresController::class, 'show'])
-            ->name('utilizadores.show');
+     // ---------- Alojamentos (PAGES) ----------
 
-        // 👉 /admin/utilizadores/{user}  (update)
-        Route::match(['put', 'patch'], '/utilizadores/{user}', [UtilizadoresController::class, 'update'])
-            ->name('utilizadores.update');
+ Route::get('/alojamentos', fn () =>
+        Inertia::render('Admin/Alojamentos/Index')
+    )->name('alojamentos');
 
-        // 👉 /admin/utilizadores/{user}  (destroy)
-        Route::delete('/utilizadores/{user}', [UtilizadoresController::class, 'destroy'])
-            ->name('utilizadores.destroy');
-    });
-    // Página Inertia
+    Route::get('/alojamentos/criar', fn () =>
+        Inertia::render('Admin/Alojamentos/Create')
+    )->name('alojamentos.create');
+
+    Route::get('/alojamentos/{id}/editar', fn ($id) =>
+        Inertia::render('Admin/Alojamentos/Edit', ['id' => $id])
+    )->name('alojamentos.edit');
+
+    // ================================
+    //      API INTERNA (JSON)
+    // ================================
+    Route::prefix('api')->group(function () {
+
+        // ---------- API UTILIZADORES ----------
+        Route::get('/utilizadores', [UtilizadoresController::class, 'index']);
+        Route::post('/utilizadores', [UtilizadoresController::class, 'store']);
+        Route::get('/utilizadores/{user}', [UtilizadoresController::class, 'show']);
+        Route::put('/utilizadores/{user}', [UtilizadoresController::class, 'update']);
+        Route::delete('/utilizadores/{user}', [UtilizadoresController::class, 'destroy']);
+
+        // ---------- API ALOJAMENTOS ----------
+        Route::get('/alojamentos', [AlojamentoController::class, 'index']);
+        Route::post('/alojamentos', [AlojamentoController::class, 'store']);
+        Route::get('/alojamentos/{alojamento}', [AlojamentoController::class, 'show']);
+        Route::put('/alojamentos/{alojamento}', [AlojamentoController::class, 'update']);
+        Route::delete('/alojamentos/{alojamento}', [AlojamentoController::class, 'destroy']);
+        Route::post('/alojamentos/{alojamento}/fotos', [AlojamentoController::class, 'uploadFotos']);
+        Route::delete('/alojamentos/fotos/{foto}', [AlojamentoController::class, 'deleteFoto']);
     
-
-Route::get('/alojamentos', function () {
-    // Buscar todos os alojamentos
-    $alojamentos = Alojamento::all(); // Ou qualquer lógica que você queira para buscar os alojamentos
-    return Inertia::render('Alojamentos', [
-        'alojamentos' => $alojamentos,
-    ]);
-});
-
-Route::get('/alojamentos/{id}', function ($id) {
-    // Buscar alojamento específico
-    $alojamento = Alojamento::findOrFail($id);
-
-    return Inertia::render('AlojamentoDetalhes', [
-        'id' => $id,                  // necessário para o Vue
-        'alojamento' => $alojamento, // envia dados completos também
-    ]);
+           });
 });
