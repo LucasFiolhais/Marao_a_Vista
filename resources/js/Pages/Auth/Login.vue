@@ -22,7 +22,7 @@ const form = useForm({
     remember: false,
 })
 
-// 🔐 Estado reativo para guardar token local (apenas se usares autenticação via API)
+// Estado reativo para guardar token local (apenas se usares autenticação via API)
 const authToken = ref(null)
 
 // Ler o token do localStorage de forma segura após montar o componente
@@ -46,10 +46,10 @@ const submit = () => {
                 localStorage.setItem('auth_token', response?.token ?? 'logged_in')
                 authToken.value = response?.token ?? 'logged_in'
             }
-            console.log('✅ Login bem-sucedido', response)
+            console.log('Login bem-sucedido', response)
         },
         onError: (error) => {
-            console.error('❌ Erro ao fazer login', error)
+            console.error('Erro ao fazer login', error)
             alert('Erro ao realizar login. Verifique suas credenciais e tente novamente.')
         }
     })
@@ -74,71 +74,69 @@ const logout = () => {
 </script>
 
 <template>
-    <Head title="Log in" />
+  <div class="min-h-screen flex items-center justify-center bg-secondary">
 
-    <AuthenticationCard>
-        <template #logo>
-            <AuthenticationCardLogo />
-        </template>
+    <!-- Fundo rústico em imagem + cor base -->
+    <div
+      class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-30">
+    </div>
 
-        <!-- Mensagem de status (ex: senha redefinida com sucesso) -->
-        <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
-            {{ status }}
+    <!-- Card -->
+    <div class="relative z-10 w-full max-w-md bg-white shadow-xl rounded-xl p-8 border border-primary">
+      
+      <h2 class="text-3xl font-semibold text-center mb-4 text-dark">
+        Bem-vindo(a)
+      </h2>
+
+      <p class="text-center text-dark/70 mb-8">
+        Entre para gerir ou reservar o seu alojamento
+      </p>
+
+      <form @submit.prevent="submit" class="space-y-5">
+
+        <div>
+          <label class="block text-dark mb-1">Email</label>
+          <input
+            v-model="form.email"
+            type="email"
+            class="w-full border border-primary rounded-md p-2 bg-secondary/50 focus:ring-2 focus:ring-accent focus:outline-none"
+          />
         </div>
 
-        <!-- Formulário de login -->
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
-                <TextInput
-                    id="email"
-                    v-model="form.email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
+        <div>
+          <label class="block text-dark mb-1">Password</label>
+          <input
+            v-model="form.password"
+            type="password"
+            class="w-full border border-primary rounded-md p-2 bg-secondary/50 focus:ring-2 focus:ring-accent focus:outline-none"
+          />
+        </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-                <TextInput
-                    id="password"
-                    v-model="form.password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    required
-                    autocomplete="current-password"
-                />
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
+        <div class="flex items-center justify-between text-dark">
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" v-model="form.remember" />
+            <span>Lembrar-me</span>
+          </label>
+          <a href="/forgot-password" class="hover:underline text-dark">
+            Esqueceu a password?
+          </a>
+        </div>
 
-            <div class="block mt-4">
-                <label class="flex items-center">
-                    <Checkbox v-model:checked="form.remember" name="remember" />
-                    <span class="ms-2 text-sm text-gray-600">Remember me</span>
-                </label>
-            </div>
+        <button
+          type="submit"
+          class="w-full py-2 bg-primary hover:bg-dark transition text-white rounded-md shadow-md"
+        >
+          Entrar
+        </button>
+      </form>
 
-            <div class="flex items-center justify-end mt-4">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                    Forgot your password?
-                </Link>
+      <p class="text-center mt-6 text-dark">
+        Ainda não tem conta?
+        <a href="/register" class="text-accent font-semibold hover:underline">
+          Criar conta
+        </a>
+      </p>
+    </div>
 
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Log in
-                </PrimaryButton>
-            </div>
-        </form>
-    </AuthenticationCard>
+  </div>
 </template>

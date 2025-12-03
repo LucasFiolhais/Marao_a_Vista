@@ -8,10 +8,10 @@ use Illuminate\Http\Request;
 
 class MeteoController extends Controller
 {
-    protected $weatherServices;
+    protected $weatherService;
 
-    public function __construct(WeatherService $weatherServices){
-        $this->weatherService = $weatherServices;
+    public function __construct(WeatherService $weatherService){
+        $this->weatherService = $weatherService;
     }
 
     public function index(Request $request){

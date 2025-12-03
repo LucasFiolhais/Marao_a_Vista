@@ -5,7 +5,7 @@
     <main class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 pt-24"> 
       
       <header class="text-center mb-12">
-        <h1 class="text-5xl font-serif font-semibold text-gray-900 mb-2">Contact Us</h1>
+        <h1 class="text-5xl font-serif font-semibold text-gray-900 mb-2">CONTACTOS</h1>
         <p class="text-sm text-gray-600">Se tiver alguma dúvida ou precisar de ajuda, entre em contato conosco.</p>
       </header>
       
@@ -29,14 +29,41 @@
             </div>
           </div>
           
+          <!-- Card da Meteorologia -->
           <div class="bg-white p-6 rounded-lg shadow-md flex items-start space-x-4">
-            <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <img 
+              v-if="!weather.loading && !weather.error"
+              :src="`https://openweathermap.org/img/wn/${weather.icone}@2x.png`"
+              alt="Ícone do tempo"
+              class="w-12 h-12"
+            />
+
+          <!-- Ícone de loading enquanto busca os dados -->
+          <svg v-else class="w-8 h-8 text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke-width="4" />
+          </svg>
+
             <div>
-              <p class="text-xl font-semibold mb-1">Endereço</p>
-              <p class="text-gray-500 text-sm">Rua Fictícia, 123 - Cidade, País</p>
+              <p class="text-xl font-semibold mb-1">Temperatura Atual</p>
+
+              <p v-if="weather.loading" class="text-gray-500 text-sm">
+              A carregar dados meteorológicos...
+              </p>
+
+            <div v-else>
+              <p class="text-2xl font-bold text-gray-800">
+                {{ weather.temperatura }}°C
+              </p>
+              <p class="text-gray-600 text-sm">
+                Humidade: {{ weather.descricao }}
+              </p>
+              <p class="text-gray-500 text-xs mt-1">
+                Localidade: Poiares
+              </p>
             </div>
           </div>
         </div>
+      </div>
         
         <div class="bg-white p-3 rounded-lg shadow-md flex items-center justify-center">
             <iframe 
@@ -80,7 +107,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import Navbar from '../Components/NavBar.vue'; 
 
 // --- Estado da FAQ ---
@@ -95,6 +122,37 @@ const faqs = ref([
 const toggleFAQ = (index) => {
   faqs.value[index].isOpen = !faqs.value[index].isOpen;
 };
+
+
+
+const weather = ref({
+  loading: true,
+  error: false,
+  temperatura: null,
+  descricao: "",
+  cidade: "",
+  icone: ""
+});
+
+onMounted(async () => {
+  try {
+    const res = await fetch("/api/public/meteo");
+    const data = await res.json();
+
+    weather.value = {
+      loading: false,
+      error: false,
+      temperatura: data.temperatura,
+      descricao: data.descricao,
+      cidade: data.cidade,
+      icone: data.icone
+    };
+  } catch (e) {
+    weather.value.loading = false;
+    weather.value.error = true;
+  }
+});
+
 </script>
 
 <style scoped>

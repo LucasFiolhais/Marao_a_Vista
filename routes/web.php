@@ -49,7 +49,7 @@ Route::middleware([
     ->name('admin.')           // todas as rotas começam com admin.
     ->group(function () {
 
-        // 👉 /admin  (DASHBOARD)
+        //admin  (DASHBOARD)
         Route::get('/', fn () => Inertia::render('Admin/Dashboard'))
             ->name('dashboard');
         Route::get('/reservas', fn () => Inertia::render('Admin/RservasAdmin'))

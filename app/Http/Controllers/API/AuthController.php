@@ -42,7 +42,7 @@ class AuthController extends Controller
     }
 
     /**
-     * 🔒 Endpoint: /api/login
+     *  Endpoint: /api/login
      * Autentica um utilizador e emite um token Sanctum.
      */
     public function login(Request $request)
@@ -117,7 +117,7 @@ class AuthController extends Controller
     }
 
     /**
-     * 🔐 Endpoint: /api/profile/password (Requer auth:sanctum)
+     * Endpoint: /api/profile/password (Requer auth:sanctum)
      * Atualiza a password do utilizador autenticado.
      */
     public function changePassword(Request $request)

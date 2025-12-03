@@ -18,7 +18,7 @@ class User extends Authenticatable
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
-    use HasRoles; // 👈 AQUI é que ligas o Spatie ao User
+    use HasRoles; // AQUI é que ligas o Spatie ao User
 
     /**
      * The attributes that are mass assignable.
@@ -29,7 +29,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-       
     ];
 
     /**

@@ -12,13 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // 👉 Middleware do grupo "web" (Jetstream + Inertia)
+        //  Middleware do grupo "web" (Jetstream + Inertia)
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        // 👉 Aliases de middleware (o que usas nas rotas: 'auth', 'role', etc.)
+        //  Aliases de middleware
         $middleware->alias([
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
@@ -32,13 +32,19 @@ return Application::configure(basePath: dirname(__DIR__))
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-        // 👇 Aqui é que estava o problema: usar Middleware (singular)
         'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
         'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
     ]);
+        
+        /* $middleware->alias([
+            'role' => \App\Http\Middleware\CheckRole::class,
+            'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+        ]); */
+        
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+
     })
     ->create();

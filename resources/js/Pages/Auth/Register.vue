@@ -24,89 +24,81 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Register" />
+  <div class="min-h-screen flex items-center justify-center bg-secondary">
 
-    <AuthenticationCard>
-        <template #logo>
-            <AuthenticationCardLogo />
-        </template>
+    <!-- Fundo rústico -->
+    <div
+      class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1529692236671-f1d6f09c09b0?auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-30">
+    </div>
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="name" value="Name" />
-                <TextInput
-                    id="name"
-                    v-model="form.name"
-                    type="text"
-                    class="mt-1 block w-full"
-                    required
-                    autofocus
-                    autocomplete="name"
-                />
-                <InputError class="mt-2" :message="form.errors.name" />
-            </div>
+    <!-- Card principal -->
+    <div class="relative z-10 w-full max-w-md bg-white shadow-xl rounded-xl p-8 border border-primary">
+      
+      <h2 class="text-3xl font-semibold text-center mb-4 text-dark">
+        Criar Conta
+      </h2>
 
-            <div class="mt-4">
-                <InputLabel for="email" value="Email" />
-                <TextInput
-                    id="email"
-                    v-model="form.email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    required
-                    autocomplete="username"
-                />
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
+      <p class="text-center text-dark/70 mb-8">
+        Junte-se à nossa plataforma de alojamento
+      </p>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-                <TextInput
-                    id="password"
-                    v-model="form.password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    required
-                    autocomplete="new-password"
-                />
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
+      <form @submit.prevent="submit" class="space-y-5">
 
-            <div class="mt-4">
-                <InputLabel for="password_confirmation" value="Confirm Password" />
-                <TextInput
-                    id="password_confirmation"
-                    v-model="form.password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    required
-                    autocomplete="new-password"
-                />
-                <InputError class="mt-2" :message="form.errors.password_confirmation" />
-            </div>
+        <div>
+          <label class="block text-dark mb-1">Nome</label>
+          <input
+            v-model="form.name"
+            type="text"
+            class="w-full border border-primary rounded-md p-2 bg-secondary/50 focus:ring-2 focus:ring-accent focus:outline-none"
+            required
+          />
+        </div>
 
-            <div v-if="$page.props.jetstream.hasTermsAndPrivacyPolicyFeature" class="mt-4">
-                <InputLabel for="terms">
-                    <div class="flex items-center">
-                        <Checkbox id="terms" v-model:checked="form.terms" name="terms" required />
+        <div>
+          <label class="block text-dark mb-1">Email</label>
+          <input
+            v-model="form.email"
+            type="email"
+            class="w-full border border-primary rounded-md p-2 bg-secondary/50 focus:ring-2 focus:ring-accent focus:outline-none"
+            required
+          />
+        </div>
 
-                        <div class="ms-2">
-                            I agree to the <a target="_blank" :href="route('terms.show')" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Terms of Service</a> and <a target="_blank" :href="route('policy.show')" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Privacy Policy</a>
-                        </div>
-                    </div>
-                    <InputError class="mt-2" :message="form.errors.terms" />
-                </InputLabel>
-            </div>
+        <div>
+          <label class="block text-dark mb-1">Password</label>
+          <input
+            v-model="form.password"
+            type="password"
+            class="w-full border border-primary rounded-md p-2 bg-secondary/50 focus:ring-2 focus:ring-accent focus:outline-none"
+            required
+          />
+        </div>
 
-            <div class="flex items-center justify-end mt-4">
-                <Link :href="route('login')" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Already registered?
-                </Link>
+        <div>
+          <label class="block text-dark mb-1">Confirmar Password</label>
+          <input
+            v-model="form.password_confirmation"
+            type="password"
+            class="w-full border border-primary rounded-md p-2 bg-secondary/50 focus:ring-2 focus:ring-accent focus:outline-none"
+            required
+          />
+        </div>
 
-                <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Register
-                </PrimaryButton>
-            </div>
-        </form>
-    </AuthenticationCard>
+        <button
+          type="submit"
+          class="w-full py-2 bg-primary hover:bg-dark transition text-white rounded-md shadow-md"
+        >
+          Criar Conta
+        </button>
+      </form>
+
+      <p class="text-center mt-6 text-dark">
+        Já tem conta?
+        <a href="/login" class="text-accent font-semibold hover:underline">
+          Entrar
+        </a>
+      </p>
+    </div>
+
+  </div>
 </template>
