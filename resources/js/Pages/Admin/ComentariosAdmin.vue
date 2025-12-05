@@ -94,7 +94,11 @@ const enviarResposta = async () => {
 
 const goToPage = (url) => {
   if (!url) return
-  fetchComentarios(url) // axios lida bem com URL absoluto
+
+  const parsed = new URL(url)
+  const relative = parsed.pathname + parsed.search
+
+  fetchComentarios(relative)
 }
 onMounted(() => fetchComentarios())
 </script>
