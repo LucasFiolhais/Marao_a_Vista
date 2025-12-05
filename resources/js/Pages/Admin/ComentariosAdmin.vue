@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import axios from '@/axiosBackend' // assumindo baseURL = '/admin/api'
+import backend from '@/axiosBackend'
 
 const comentarios = ref([])
 const pagination = ref(null)
@@ -21,7 +21,7 @@ const erroResposta = ref('')
 const fetchComentarios = async (url = null) => {
   loading.value = true
   try {
-    const response = await axios.get(url || '/comentarios', {
+    const response = await backend.get(url || '/comentarios', {
       params: { status: statusFilter.value },
     })
 
@@ -53,7 +53,7 @@ const fetchComentarios = async (url = null) => {
 
 const aprovar = async (comentario) => {
   try {
-    await axios.post(`/comentarios/${comentario.id}/aprovar`)
+    await backend.post(`/comentarios/${comentario.id}/aprovar`)
     fetchComentarios()
   } catch (e) {
     console.error('Erro ao aprovar', e)
@@ -63,7 +63,7 @@ const aprovar = async (comentario) => {
 const apagar = async (comentario) => {
   if (!confirm('Tens a certeza que queres apagar este comentário?')) return
   try {
-    await axios.delete(`/comentarios/${comentario.id}`)
+    await backend.delete(`/comentarios/${comentario.id}`)
     fetchComentarios()
   } catch (e) {
     console.error('Erro ao apagar', e)
@@ -80,7 +80,7 @@ const enviarResposta = async () => {
   if (!comentarioSelecionado.value) return
 
   try {
-    await axios.post(`/comentarios/${comentarioSelecionado.value.id}/responder`, {
+    await backend.post(`/comentarios/${comentarioSelecionado.value.id}/responder`, {
       resposta_admin: respostaTexto.value,
     })
     comentarioSelecionado.value = null
@@ -94,9 +94,8 @@ const enviarResposta = async () => {
 
 const goToPage = (url) => {
   if (!url) return
-  fetchComentarios(url.replace('/admin/api', '')) // se o backend devolver URL absoluto, ajusta conforme o teu axiosBackend
+  fetchComentarios(url) // axios lida bem com URL absoluto
 }
-
 onMounted(() => fetchComentarios())
 </script>
 
