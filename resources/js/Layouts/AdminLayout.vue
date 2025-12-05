@@ -4,7 +4,7 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-[#616160] text-white flex flex-col">
       <div class="p-4 text-xl font-bold border-b border-[#9faea0]">
-        Painel Admin
+        Painel Administrativo
       </div>
       <nav class="flex-1 p-4 space-y-2">
       <Link :href="route('admin.dashboard')" class="block p-2 hover:bg-gray-200">Dashboard</Link>

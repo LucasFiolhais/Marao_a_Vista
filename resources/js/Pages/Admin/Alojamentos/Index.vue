@@ -75,13 +75,13 @@ onMounted(() => fetchAlojamentos())
 <template>
   <AdminLayout title="Gestão de Alojamentos">
     <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">Alojamentos</h1>
+      <h1 class="text-2xl font-bold">Quartos</h1>
 
       <Link
         :href="route('admin.alojamentos.create')"
         class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
       >
-        Criar Alojamento
+        Criar Quarto
       </Link>
     </div>
 
