@@ -4,53 +4,36 @@ import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import backend from '@/axiosBackend'
 
-// Formulário
 const form = ref({
   user_id: '',
   alojamento_id: '',
   checkin: '',
   checkout: '',
   hospedes: 1,
-  estado: 'pendente',
   observacoes: '',
 })
-
-const estados = [
-  'pendente',
-  'confirmado',
-  'concluido',
-  'cancelado',
-  'expirado',
-]
 
 const users = ref([])
 const alojamentos = ref([])
 
 const errors = ref({})
 const saving = ref(false)
-const loadingOptions = ref(true)
+const loading = ref(true)
 
-// Carrega utilizadores + alojamentos para os selects
+// carregar opções
 const fetchOptions = async () => {
-  loadingOptions.value = true
   try {
     const [usersRes, alojRes] = await Promise.all([
       backend.get('/utilizadores', { params: { per_page: 100 } }),
       backend.get('/alojamentos', { params: { per_page: 100 } }),
     ])
 
-    // assumindo resposta paginada { data: [...] }
-    users.value = Array.isArray(usersRes.data?.data)
-      ? usersRes.data.data
-      : []
-
-    alojamentos.value = Array.isArray(alojRes.data?.data)
-      ? alojRes.data.data
-      : []
+    users.value = usersRes.data.data || []
+    alojamentos.value = alojRes.data.data || []
   } catch (error) {
     console.error('Erro ao carregar opções:', error)
   } finally {
-    loadingOptions.value = false
+    loading.value = false
   }
 }
 
@@ -65,15 +48,12 @@ const submit = async () => {
       checkin: form.value.checkin,
       checkout: form.value.checkout,
       hospedes: form.value.hospedes,
-      estado: form.value.estado,
       observacoes: form.value.observacoes,
     })
 
-    // Voltar à lista de reservas
-    router.visit(route('admin.reservas'))
+    router.visit('/admin/reservas')
   } catch (error) {
-    console.error('Erro ao criar reserva:', error)
-    if (error.response && error.response.status === 422) {
+    if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
     }
   } finally {
@@ -81,201 +61,69 @@ const submit = async () => {
   }
 }
 
-onMounted(() => {
-  fetchOptions()
-})
+onMounted(fetchOptions)
 </script>
 
 <template>
   <AdminLayout title="Criar Reserva">
     <div class="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h1 class="text-xl font-bold text-gray-800">
-          Criar Reserva
-        </h1>
-
-        <button
-          type="button"
-          class="text-sm text-gray-600 hover:text-gray-800"
-          @click="router.visit(route('admin.reservas'))"
-        >
-          ← Voltar à lista
+      <div class="flex justify-between mb-4">
+        <h1 class="text-xl font-bold">Criar Reserva</h1>
+        <button class="text-sm text-gray-600" @click="router.visit('/admin/reservas')">
+          ← Voltar
         </button>
       </div>
 
-      <div v-if="loadingOptions" class="text-sm text-gray-500 mb-4">
-        A carregar dados (utilizadores e alojamentos)...
+      <div v-if="loading" class="text-sm text-gray-500">
+        A carregar dados...
       </div>
 
-      <form class="space-y-4" @submit.prevent="submit">
-        <!-- Utilizador -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Cliente
-          </label>
-          <select
-            v-model="form.user_id"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">Selecione um utilizador</option>
-            <option
-              v-for="u in users"
-              :key="u.id"
-              :value="u.id"
-            >
-              {{ u.name }} ({{ u.email }})
-            </option>
-          </select>
-          <p
-            v-if="errors.user_id"
-            class="text-xs text-red-600 mt-1"
-          >
-            {{ errors.user_id[0] }}
-          </p>
-        </div>
+      <form v-else class="space-y-4" @submit.prevent="submit">
+        <!-- Cliente -->
+        <select v-model="form.user_id" class="w-full border px-3 py-2 rounded">
+          <option value="">Selecionar cliente</option>
+          <option v-for="u in users" :key="u.id" :value="u.id">
+            {{ u.name }} ({{ u.email }})
+          </option>
+        </select>
 
         <!-- Alojamento -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Alojamento
-          </label>
-          <select
-            v-model="form.alojamento_id"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">Selecione um alojamento</option>
-            <option
-              v-for="a in alojamentos"
-              :key="a.id"
-              :value="a.id"
-            >
-              {{ a.titulo }}
-            </option>
-          </select>
-          <p
-            v-if="errors.alojamento_id"
-            class="text-xs text-red-600 mt-1"
-          >
-            {{ errors.alojamento_id[0] }}
-          </p>
-        </div>
+        <select v-model="form.alojamento_id" class="w-full border px-3 py-2 rounded">
+          <option value="">Selecionar alojamento</option>
+          <option v-for="a in alojamentos" :key="a.id" :value="a.id">
+            {{ a.titulo }}
+          </option>
+        </select>
 
         <!-- Datas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Check-in
-            </label>
-            <input
-              v-model="form.checkin"
-              type="date"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <p
-              v-if="errors.checkin"
-              class="text-xs text-red-600 mt-1"
-            >
-              {{ errors.checkin[0] }}
-            </p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Check-out
-            </label>
-            <input
-              v-model="form.checkout"
-              type="date"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <p
-              v-if="errors.checkout"
-              class="text-xs text-red-600 mt-1"
-            >
-              {{ errors.checkout[0] }}
-            </p>
-          </div>
+        <div class="grid grid-cols-2 gap-4">
+          <input v-model="form.checkin" type="date" class="border px-3 py-2 rounded" />
+          <input v-model="form.checkout" type="date" class="border px-3 py-2 rounded" />
         </div>
 
-        <!-- Hóspedes + Estado -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Nº de hóspedes
-            </label>
-            <input
-              v-model.number="form.hospedes"
-              type="number"
-              min="1"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <p
-              v-if="errors.hospedes"
-              class="text-xs text-red-600 mt-1"
-            >
-              {{ errors.hospedes[0] }}
-            </p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              Estado
-            </label>
-            <select
-              v-model="form.estado"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option
-                v-for="e in estados"
-                :key="e"
-                :value="e"
-              >
-                {{ e }}
-              </option>
-            </select>
-            <p
-              v-if="errors.estado"
-              class="text-xs text-red-600 mt-1"
-            >
-              {{ errors.estado[0] }}
-            </p>
-          </div>
-        </div>
+        <!-- Hóspedes -->
+        <input
+          v-model.number="form.hospedes"
+          type="number"
+          min="1"
+          class="border px-3 py-2 rounded"
+        />
 
         <!-- Observações -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Observações
-          </label>
-          <textarea
-            v-model="form.observacoes"
-            rows="3"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <p
-            v-if="errors.observacoes"
-            class="text-xs text-red-600 mt-1"
-          >
-            {{ errors.observacoes[0] }}
-          </p>
-        </div>
+        <textarea
+          v-model="form.observacoes"
+          rows="3"
+          class="w-full border px-3 py-2 rounded"
+          placeholder="Observações (opcional)"
+        ></textarea>
 
         <!-- Botões -->
-        <div class="flex justify-end gap-2 pt-4 border-t mt-4">
-          <button
-            type="button"
-            class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
-            @click="router.visit(route('admin.reservas'))"
-          >
+        <div class="flex justify-end gap-2 pt-4 border-t">
+          <button type="button" class="border px-4 py-2" @click="router.visit('/admin/reservas')">
             Cancelar
           </button>
-
-          <button
-            type="submit"
-            class="px-4 py-2 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
-            :disabled="saving"
-          >
-            {{ saving ? 'A guardar...' : 'Guardar Reserva' }}
+          <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">
+            {{ saving ? 'A guardar...' : 'Criar Reserva' }}
           </button>
         </div>
       </form>

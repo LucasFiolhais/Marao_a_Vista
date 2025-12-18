@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import axios from '@/axiosBackend' 
+import axios from '@/axiosBackend'
 import { router } from '@inertiajs/vue3'
 
 // 🔹 Estado reativo
@@ -40,12 +40,10 @@ const fetchReservas = async (url = null) => {
 
     const data = response.data
 
-    // reservas
     reservas.value = Array.isArray(data?.reservas?.data)
       ? data.reservas.data
       : []
 
-    // paginação
     pagination.value = {
       current_page: data.reservas.current_page,
       last_page: data.reservas.last_page,
@@ -53,7 +51,6 @@ const fetchReservas = async (url = null) => {
       prev_page_url: data.reservas.prev_page_url,
     }
 
-    // filtros auxiliares
     estados.value = data.estados || []
     alojamentos.value = data.alojamentos || []
   } catch (error) {
@@ -84,32 +81,30 @@ const irParaPagina = (url) => {
   fetchReservas(url)
 }
 
-
-
+// ✅ Navegação (SEM Ziggy)
 const verReserva = (id) => {
-  router.visit(route('admin.reservas.edit', id))
+  router.visit(`/admin/reservas/${id}/editar`)
 }
 
 const editarReserva = (id) => {
-  router.visit(route('admin.reservas.edit', id))
+  router.visit(`/admin/reservas/${id}/editar`)
 }
 
-// 👉 Alterar estado rápido
-const alterarEstadoReserva = async (reserva, novoEstado) => {
-  if (reserva.estado === novoEstado) return
+const irParaCriarReserva = () => {
+  router.visit('/admin/reservas/criar')
+}
+
+// ✅ ÚNICA ação de estado: cancelar
+const cancelarReserva = async (reserva) => {
+  if (reserva.estado === 'cancelado') return
+
+  if (!confirm(`Cancelar a reserva #${reserva.id}?`)) return
 
   try {
-    await axios.patch(`/reservas/${reserva.id}/estado`, {
-      estado: novoEstado,
-    })
-
-    // opção 1: atualizar só em memória
-    reserva.estado = novoEstado
-
-    // opção 2 (se preferires sempre “limpo”):
-    // await fetchReservas()
+    await axios.patch(`/reservas/${reserva.id}/cancelar`)
+    reserva.estado = 'cancelado'
   } catch (error) {
-    console.error('Erro ao alterar estado da reserva:', error)
+    alert('Não foi possível cancelar a reserva.')
   }
 }
 
@@ -123,11 +118,6 @@ const apagarReserva = async (reserva) => {
   } catch (error) {
     console.error('Erro ao apagar reserva:', error)
   }
-}
-
-// Para futura página de "Criar Reserva"
-const irParaCriarReserva = () => {
-  router.visit(route('admin.reservas.create')) // 👉 quando tiveres essa rota
 }
 
 // Carregar na montagem
@@ -181,11 +171,7 @@ onMounted(() => {
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="todas">Todas</option>
-            <option
-              v-for="estado in estados"
-              :key="estado"
-              :value="estado"
-            >
+            <option v-for="estado in estados" :key="estado" :value="estado">
               {{ estado.charAt(0).toUpperCase() + estado.slice(1) }}
             </option>
           </select>
@@ -201,11 +187,7 @@ onMounted(() => {
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">Todos</option>
-            <option
-              v-for="aloj in alojamentos"
-              :key="aloj.id"
-              :value="aloj.id"
-            >
+            <option v-for="aloj in alojamentos" :key="aloj.id" :value="aloj.id">
               {{ aloj.titulo }}
             </option>
           </select>
@@ -259,9 +241,7 @@ onMounted(() => {
             :key="reserva.id"
             class="border-t text-gray-700 hover:bg-gray-50"
           >
-            <td class="px-4 py-3 text-xs font-mono">
-              #{{ reserva.id }}
-            </td>
+            <td class="px-4 py-3 text-xs font-mono">#{{ reserva.id }}</td>
 
             <td class="px-4 py-3">
               <div class="text-xs font-semibold">
@@ -276,17 +256,10 @@ onMounted(() => {
               {{ reserva.alojamento?.titulo || 'N/D' }}
             </td>
 
-            <td class="px-4 py-3 text-xs">
-              {{ reserva.checkin }}
-            </td>
+            <td class="px-4 py-3 text-xs">{{ reserva.checkin }}</td>
+            <td class="px-4 py-3 text-xs">{{ reserva.checkout }}</td>
 
-            <td class="px-4 py-3 text-xs">
-              {{ reserva.checkout }}
-            </td>
-
-            <td class="px-4 py-3 text-center text-xs">
-              {{ reserva.hospedes }}
-            </td>
+            <td class="px-4 py-3 text-center text-xs">{{ reserva.hospedes }}</td>
 
             <!-- Badge de estado -->
             <td class="px-4 py-3">
@@ -294,8 +267,8 @@ onMounted(() => {
                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
                 :class="{
                   'bg-yellow-100 text-yellow-800': reserva.estado === 'pendente',
-                  'bg-green-100 text-green-800': reserva.estado === 'confirmado' || reserva.estado === 'concluido',
-                  'bg-red-100 text-red-800': reserva.estado === 'cancelado' || reserva.estado === 'expirado',
+                  'bg-green-100 text-green-800': reserva.estado === 'confirmado',
+                  'bg-red-100 text-red-800': reserva.estado === 'cancelado',
                 }"
               >
                 {{ reserva.estado }}
@@ -306,58 +279,43 @@ onMounted(() => {
               {{ Number(reserva.total).toFixed(2) }} €
             </td>
 
-            <!-- 4️⃣ Ações rápidas (placeholders por agora) -->
-           <td class="px-4 py-3 text-right">
-  <div class="flex justify-end gap-2 text-[11px]">
-    <button
-      class="px-2 py-1 border rounded hover:bg-gray-100"
-      title="Ver detalhes"
-      @click="verReserva(reserva.id)"
-    >
-      Ver
-    </button>
+            <!-- Ações -->
+            <td class="px-4 py-3 text-right">
+              <div class="flex justify-end gap-2 text-[11px]">
+                <button
+                  class="px-2 py-1 border rounded hover:bg-gray-100"
+                  title="Ver detalhes"
+                  @click="verReserva(reserva.id)"
+                >
+                  Ver
+                </button>
 
-    <button
-      class="px-2 py-1 border rounded hover:bg-gray-100"
-      title="Editar"
-      @click="editarReserva(reserva.id)"
-    >
-      Editar
-    </button>
+                <button
+                  class="px-2 py-1 border rounded hover:bg-gray-100"
+                  title="Editar"
+                  @click="editarReserva(reserva.id)"
+                >
+                  Editar
+                </button>
 
-    <button
-      class="px-2 py-1 border rounded hover:bg-green-50"
-      title="Confirmar"
-      @click="alterarEstadoReserva(reserva, 'confirmado')"
-    >
-      Confirmar
-    </button>
+                <button
+                  v-if="reserva.estado !== 'cancelado'"
+                  class="px-2 py-1 border rounded hover:bg-red-50 text-red-600"
+                  title="Cancelar"
+                  @click="cancelarReserva(reserva)"
+                >
+                  Cancelar
+                </button>
 
-    <button
-      class="px-2 py-1 border rounded hover:bg-yellow-50"
-      title="Marcar como pendente"
-      @click="alterarEstadoReserva(reserva, 'pendente')"
-    >
-      Pendente
-    </button>
-
-    <button
-      class="px-2 py-1 border rounded hover:bg-red-50"
-      title="Cancelar"
-      @click="alterarEstadoReserva(reserva, 'cancelado')"
-    >
-      Cancelar
-    </button>
-
-    <button
-      class="px-2 py-1 border rounded text-red-600 hover:bg-red-50"
-      title="Apagar"
-      @click="apagarReserva(reserva)"
-    >
-      Apagar
-    </button>
-  </div>
-</td>
+                <button
+                  class="px-2 py-1 border rounded text-red-600 hover:bg-red-50"
+                  title="Apagar"
+                  @click="apagarReserva(reserva)"
+                >
+                  Apagar
+                </button>
+              </div>
+            </td>
           </tr>
 
           <tr v-if="!reservas.length && !loading">

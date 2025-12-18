@@ -31,7 +31,7 @@ onMounted(() => {
         authToken.value = localStorage.getItem('auth_token')
     }
 })
-
+const loginError = ref('')
 // Função para login
 const submit = () => {
     form.transform(data => ({
@@ -48,10 +48,9 @@ const submit = () => {
             }
             console.log('Login bem-sucedido', response)
         },
-        onError: (error) => {
-            console.error('Erro ao fazer login', error)
-            alert('Erro ao realizar login. Verifique suas credenciais e tente novamente.')
-        }
+        onError: (errors) => {
+        loginError.value = errors?.email || ''
+      }
     })
 }
 
@@ -91,7 +90,12 @@ const logout = () => {
       <p class="text-center text-dark/70 mb-8">
         Entre para gerir ou reservar o seu alojamento
       </p>
-
+      <div
+        v-if="loginError"
+        class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"
+      >
+        {{ loginError }}
+      </div>
       <form @submit.prevent="submit" class="space-y-5">
 
         <div>

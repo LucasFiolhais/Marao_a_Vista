@@ -16,9 +16,8 @@ class ReservaController extends Controller
      */
     public function index(Request $request)
     {
-        // Filtros vindos da query string
         $search       = $request->input('search');          // ID ou referência
-        $estado       = $request->input('estado');          // pendente, confirmado, cancelado, etc.
+        $estado       = $request->input('estado');          // pendente, confirmado, cancelado
         $alojamentoId = $request->input('alojamento_id');   // ID do alojamento
         $perPage      = (int) $request->input('per_page', 10);
 
@@ -45,29 +44,28 @@ class ReservaController extends Controller
 
         $reservas = $query->paginate($perPage);
 
-        // Opções para o dropdown de alojamentos
-        $alojamentos = Alojamento::orderBy('titulo')  // ajusta se o campo tiver outro nome
+        $alojamentos = Alojamento::orderBy('titulo')
             ->get(['id', 'titulo']);
 
-        // Estados possíveis (para o filtro)
+        // Estados que o admin usa (filtro/visualização)
         $estados = [
             'pendente',
             'confirmado',
-            'concluido',
             'cancelado',
-            'expirado',
         ];
 
         return response()->json([
-            'reservas'    => $reservas,     // paginator
-            'alojamentos' => $alojamentos,  // para dropdown
-            'estados'     => $estados,      // para filtro
+            'reservas'    => $reservas,
+            'alojamentos' => $alojamentos,
+            'estados'     => $estados,
         ]);
     }
 
     /**
-     * CRIAR RESERVA
+     * CRIAR RESERVA (ADMIN)
      * POST /admin/api/reservas
+     *
+     * Regra: estado é sempre "pendente" (pagamento/confirmado é tratado fora do admin)
      */
     public function store(Request $request)
     {
@@ -77,18 +75,15 @@ class ReservaController extends Controller
             'checkin'       => 'required|date|after_or_equal:today',
             'checkout'      => 'required|date|after:checkin',
             'hospedes'      => 'required|integer|min:1',
-            'estado'        => 'nullable|in:pendente,confirmado,concluido,cancelado,expirado',
             'observacoes'   => 'nullable|string',
         ]);
 
-        // Calcula o total com o método estático do model
         $total = Reserva::calcularPreco(
             $data['checkin'],
             $data['checkout'],
             $data['alojamento_id']
         );
 
-        // Gera referência única
         $referencia = $this->gerarReferenciaUnica();
 
         $reserva = Reserva::create([
@@ -98,7 +93,7 @@ class ReservaController extends Controller
             'checkout'      => $data['checkout'],
             'hospedes'      => $data['hospedes'],
             'total'         => $total,
-            'estado'        => $data['estado'] ?? 'pendente',
+            'estado'        => 'pendente', // ✅ fixo
             'referencia'    => $referencia,
             'observacoes'   => $data['observacoes'] ?? null,
         ]);
@@ -109,7 +104,7 @@ class ReservaController extends Controller
     }
 
     /**
-     * VER DETALHES DE UMA RESERVA
+     * VER DETALHES
      * GET /admin/api/reservas/{reserva}
      */
     public function show(Reserva $reserva)
@@ -120,22 +115,28 @@ class ReservaController extends Controller
     }
 
     /**
-     * ATUALIZAR RESERVA COMPLETA
+     * ATUALIZAR DADOS (SEM ESTADO)
      * PUT /admin/api/reservas/{reserva}
+     *
+     * Regra: admin NÃO altera estado.
      */
     public function update(Request $request, Reserva $reserva)
     {
+        if ($reserva->estado === 'cancelado') {
+    return response()->json([
+        'message' => 'Não é possível editar uma reserva cancelada.',
+    ], 422);
+}
+      
         $data = $request->validate([
             'user_id'       => 'required|exists:users,id',
             'alojamento_id' => 'required|exists:alojamentos,id',
             'checkin'       => 'required|date',
             'checkout'      => 'required|date|after:checkin',
             'hospedes'      => 'required|integer|min:1',
-            'estado'        => 'required|in:pendente,confirmado,concluido,cancelado,expirado',
             'observacoes'   => 'nullable|string',
         ]);
 
-        // Recalcular total se datas/alojamento mudaram
         $total = Reserva::calcularPreco(
             $data['checkin'],
             $data['checkout'],
@@ -149,13 +150,35 @@ class ReservaController extends Controller
             'checkout'      => $data['checkout'],
             'hospedes'      => $data['hospedes'],
             'total'         => $total,
-            'estado'        => $data['estado'],
             'observacoes'   => $data['observacoes'] ?? null,
         ]);
 
         $reserva->load(['user', 'alojamento']);
 
         return response()->json($reserva);
+    }
+
+    /**
+     * CANCELAR RESERVA (ÚNICA AÇÃO DE ESTADO DO ADMIN)
+     * PATCH /admin/api/reservas/{reserva}/cancelar
+     */
+    public function cancelar(Reserva $reserva)
+    {
+        if ($reserva->estado === 'cancelado') {
+            return response()->json([
+                'message' => 'A reserva já está cancelada.',
+            ], 422);
+        }
+
+        $reserva->estado = 'cancelado';
+        $reserva->save();
+
+        $reserva->load(['user', 'alojamento']);
+
+        return response()->json([
+            'message' => 'Reserva cancelada com sucesso.',
+            'reserva' => $reserva,
+        ]);
     }
 
     /**
@@ -167,24 +190,6 @@ class ReservaController extends Controller
         $reserva->delete();
 
         return response()->json(null, 204);
-    }
-
-    /**
-     * ALTERAR APENAS O ESTADO (AÇÕES RÁPIDAS)
-     * PATCH /admin/api/reservas/{reserva}/estado
-     */
-    public function updateEstado(Request $request, Reserva $reserva)
-    {
-        $data = $request->validate([
-            'estado' => 'required|in:pendente,confirmado,concluido,cancelado,expirado',
-        ]);
-
-        $reserva->estado = $data['estado'];
-        $reserva->save();
-
-        $reserva->load(['user', 'alojamento']);
-
-        return response()->json($reserva);
     }
 
     /**
