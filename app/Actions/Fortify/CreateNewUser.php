@@ -17,7 +17,7 @@ class CreateNewUser implements CreatesNewUsers
      * Validate and create a newly registered user.
      *
      * @param  array<string, string>  $input
-     */
+     */ 
     public function create(array $input): User
     {
         Validator::make($input, [
@@ -27,7 +27,7 @@ class CreateNewUser implements CreatesNewUsers
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
 
-        // 1️⃣ Criar o utilizador
+        // Criar o utilizador
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
@@ -35,16 +35,16 @@ class CreateNewUser implements CreatesNewUsers
             'is_approved' => false,
         ]);
 
-        // 2️⃣ Garantir que o role "cliente" existe com o guard certo
+        // Garantir que o role "cliente" existe com o guard certo
         $clienteRole = Role::firstOrCreate([
             'name' => 'cliente',
             'guard_name' => 'web',
         ]);
 
-        // 3️⃣ Atribuir o role ao user (vai gravar em model_has_roles)
+        // Atribuir o role ao user (vai gravar em model_has_roles)
         $user->assignRole($clienteRole);
 
-        // 4️⃣ Devolver o user
+        // Devolver o user
         return $user;
     }
 }

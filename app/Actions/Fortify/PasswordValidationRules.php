@@ -15,10 +15,11 @@ trait PasswordValidationRules
      */
     protected function passwordRules(): array
     {
-        return [            'required',
+        return [
+            'required',
             'string',
             'confirmed',
-            'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#^])[A-Za-z\d@$!%*?&.#^]{8,}$/'
+            'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#^])[A-Za-z\d@$!%*?&.#^]{8,}$/',
         ];
     }
 }

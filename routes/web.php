@@ -7,11 +7,8 @@ use App\Models\Alojamento;
 use App\Http\Controllers\Admin\UtilizadoresController;
 use App\Http\Controllers\Admin\AlojamentoController;
 use App\Http\Controllers\Admin\ComentarioController;
-<<<<<<< HEAD
 use App\Http\Controllers\Admin\ReservaController;
 use App\Http\Controllers\CompleteRegistrationController;
-=======
->>>>>>> parent of 6c2ac1c (reservas)
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +19,17 @@ use App\Http\Controllers\CompleteRegistrationController;
 Route::get('/', fn() => Inertia::render('Home'));
 Route::get('/reservas', fn() => Inertia::render('Reservas'));
 Route::get('/contactos', fn() => Inertia::render('Contactos'));
+
+/*
+|---------------------------------------------------------------------------
+|
+|---------------------------------------------------------------------------
+*/
+Route::get('/complete-registration', function () {
+        return 'Conta criada com sucesso. Pode fechar esta página.';
+})->name('complete-registration.show');
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -159,7 +167,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Inertia::render('Admin/Alojamentos/Edit', ['id' => $id])
     )->name('alojamentos.edit');
 
-<<<<<<< HEAD
       // ---------- Reservas (PAGES) ----------
 
     Route::get('/reservas', fn () =>
@@ -203,11 +210,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     | API ADMIN (JSON)
     |--------------------------------------------------------------------------
     */
-=======
-    // ================================
-    //      API INTERNA (JSON)
-    // ================================
->>>>>>> parent of 6c2ac1c (reservas)
     Route::prefix('api')->group(function () {
 
         // Utilizadores API
@@ -231,12 +233,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::post('/comentarios/{comentario}/aprovar', [ComentarioController::class, 'aprovar']);
         Route::delete('/comentarios/{comentario}', [ComentarioController::class, 'destroy']);
         Route::post('/comentarios/{comentario}/responder', [ComentarioController::class, 'responder']);
-<<<<<<< HEAD
     });
 
 });
-=======
-    
-           });
-});
->>>>>>> parent of 6c2ac1c (reservas)
