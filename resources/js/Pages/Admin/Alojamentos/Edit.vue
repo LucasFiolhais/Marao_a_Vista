@@ -2,14 +2,15 @@
 import { ref, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import backend from '@/axiosBackend'
+import http from '@/http'
 
 const props = defineProps({
-  id: {
-    type: [Number, String],
-    required: true,
-  },
+  id: Number,
 })
+
+const loading = ref(false)
+const saving = ref(false)
+const deleting = ref(false)
 
 const form = ref({
   titulo: '',
@@ -17,26 +18,30 @@ const form = ref({
   preco_noite: '',
 })
 
-const fotos = ref([]) // {id, url}
-const novaFotos = ref(null)
-
 const errors = ref({})
-const loading = ref(true)
-const saving = ref(false)
-const uploading = ref(false)
+
+const fotosExistentes = ref([]) // [{id, url}...]
+const fotosInput = ref(null)
+const uploadingFotos = ref(false)
+const deletingFotoId = ref(null)
 
 const loadAlojamento = async () => {
   loading.value = true
   errors.value = {}
 
   try {
-    const res = await backend.get(`/alojamentos/${props.id}`)
-    form.value.titulo = res.data.titulo
-    form.value.descricao = res.data.descricao
-    form.value.preco_noite = res.data.preco_noite
-    fotos.value = res.data.fotos || []
-  } catch (error) {
-    console.error('Erro ao carregar alojamento:', error)
+    const res = await http.get(`/admin/alojamentos/${props.id}`)
+
+    form.value.titulo = res.data?.titulo ?? ''
+    form.value.descricao = res.data?.descricao ?? ''
+    form.value.preco_noite = res.data?.preco_noite ?? ''
+
+    // Ajusta conforme o teu backend devolve as fotos.
+    // Se devolver "fotos": [{id, url}, ...]
+    fotosExistentes.value = Array.isArray(res.data?.fotos) ? res.data.fotos : []
+  } catch (e) {
+    console.error(e)
+    alert('Erro ao carregar alojamento.')
   } finally {
     loading.value = false
   }
@@ -47,12 +52,21 @@ const submit = async () => {
   errors.value = {}
 
   try {
-    await backend.put(`/alojamentos/${props.id}`, form.value)
-    router.visit(route('admin.alojamentos'))
+    await http.put(`/admin/alojamentos/${props.id}`, {
+      titulo: form.value.titulo,
+      descricao: form.value.descricao,
+      preco_noite: form.value.preco_noite,
+    })
+
+    // recarrega (para garantir estado alinhado)
+    await loadAlojamento()
+    alert('Alojamento atualizado com sucesso.')
   } catch (error) {
     console.error('Erro ao atualizar alojamento:', error)
-    if (error.response && error.response.status === 422) {
+    if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
+    } else {
+      alert('Erro ao atualizar alojamento.')
     }
   } finally {
     saving.value = false
@@ -60,68 +74,81 @@ const submit = async () => {
 }
 
 const uploadFotos = async () => {
-  if (!novaFotos.value || !novaFotos.value.files.length) return
+  if (!fotosInput.value || !fotosInput.value.files.length) return
 
-  uploading.value = true
+  uploadingFotos.value = true
+  errors.value = {}
 
   try {
     const formData = new FormData()
-    Array.from(novaFotos.value.files).forEach(file => {
+    Array.from(fotosInput.value.files).forEach((file) => {
       formData.append('fotos[]', file)
     })
 
-    const res = await backend.post(
-      `/alojamentos/${props.id}/fotos`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    )
+    await http.post(`/admin/alojamentos/${props.id}/fotos`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
 
-    // juntar as novas fotos à lista
-    fotos.value.push(...res.data.fotos)
-    novaFotos.value.value = '' // limpar input
+    fotosInput.value.value = '' // limpa input
+    await loadAlojamento()
   } catch (error) {
     console.error('Erro ao enviar fotos:', error)
+    if (error.response?.status === 422) {
+      errors.value = error.response.data.errors || {}
+    } else {
+      alert('Erro ao enviar fotos.')
+    }
   } finally {
-    uploading.value = false
+    uploadingFotos.value = false
   }
 }
 
-const apagarFoto = async (fotoId) => {
+const deleteFoto = async (fotoId) => {
   if (!confirm('Eliminar esta foto?')) return
 
+  deletingFotoId.value = fotoId
   try {
-    await backend.delete(`/alojamentos/fotos/${fotoId}`)
-    fotos.value = fotos.value.filter(f => f.id !== fotoId)
-  } catch (error) {
-    console.error('Erro ao eliminar foto:', error)
+    await http.delete(`/admin/alojamentos/fotos/${fotoId}`)
+    await loadAlojamento()
+  } catch (e) {
+    console.error(e)
+    alert('Erro ao eliminar foto.')
+  } finally {
+    deletingFotoId.value = null
   }
 }
 
-onMounted(loadAlojamento)
+const deleteAlojamento = async () => {
+  if (!confirm('Tens a certeza que queres eliminar este quarto?')) return
+
+  deleting.value = true
+  try {
+    await http.delete(`/admin/alojamentos/${props.id}`)
+    router.visit(route('admin.alojamentos'))
+  } catch (e) {
+    console.error(e)
+    alert('Erro ao eliminar quarto.')
+  } finally {
+    deleting.value = false
+  }
+}
+
+onMounted(() => loadAlojamento())
 </script>
 
 <template>
-  <AdminLayout title="Editar Alojamento">
-    <div v-if="loading">A carregar alojamento...</div>
+  <AdminLayout title="Editar Quarto">
+    <div v-if="loading" class="py-6">A carregar...</div>
 
-    <form
-      v-else
-      @submit.prevent="submit"
-      class="max-w-3xl mx-auto bg-white p-6 shadow rounded space-y-6"
-    >
-      <!-- dados básicos -->
-      <div class="space-y-4">
+    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- FORM -->
+      <form
+        @submit.prevent="submit"
+        class="bg-white p-6 shadow rounded space-y-4"
+      >
         <div>
           <label class="block font-semibold">Título</label>
-          <input
-            v-model="form.titulo"
-            class="w-full border p-2 rounded"
-            required
-          />
+          <input v-model="form.titulo" class="w-full border p-2 rounded" required />
           <div v-if="errors.titulo" class="text-red-600 text-sm mt-1">
             {{ errors.titulo[0] }}
           </div>
@@ -129,11 +156,7 @@ onMounted(loadAlojamento)
 
         <div>
           <label class="block font-semibold">Descrição</label>
-          <textarea
-            v-model="form.descricao"
-            class="w-full border p-2 rounded"
-            required
-          ></textarea>
+          <textarea v-model="form.descricao" class="w-full border p-2 rounded" required />
           <div v-if="errors.descricao" class="text-red-600 text-sm mt-1">
             {{ errors.descricao[0] }}
           </div>
@@ -152,64 +175,103 @@ onMounted(loadAlojamento)
             {{ errors.preco_noite[0] }}
           </div>
         </div>
-      </div>
 
-      <!-- gestão de fotos -->
-      <div class="border-t pt-4">
-        <h2 class="font-semibold mb-2">Fotos do alojamento</h2>
-
-        <div class="mb-3">
-          <input
-            type="file"
-            multiple
-            ref="novaFotos"
-            @change="uploadFotos"
-          />
-          <p class="text-xs text-gray-500 mt-1">
-            Pode selecionar várias imagens de uma vez.
-          </p>
-        </div>
-
-        <div v-if="uploading" class="text-sm text-gray-500 mb-2">
-          A enviar fotos...
-        </div>
-
-        <div
-          v-if="fotos.length"
-          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
-        >
-          <div
-            v-for="foto in fotos"
-            :key="foto.id"
-            class="relative group"
+        <div class="flex gap-3">
+          <button
+            class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 disabled:opacity-50"
+            :disabled="saving"
           >
-            <img
-              :src="foto.url"
-              alt="Foto do alojamento"
-              class="w-full h-32 object-cover rounded"
-            />
+            {{ saving ? 'A guardar...' : 'Guardar' }}
+          </button>
 
+          <button
+            type="button"
+            class="px-4 py-2 border rounded hover:bg-gray-50"
+            @click="router.visit(route('admin.alojamentos'))"
+          >
+            Voltar
+          </button>
+
+          <button
+            type="button"
+            class="ml-auto px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+            :disabled="deleting"
+            @click="deleteAlojamento"
+          >
+            {{ deleting ? 'A eliminar...' : 'Eliminar quarto' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- FOTOS -->
+      <div class="bg-white p-6 shadow rounded space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold text-lg">Fotos</h2>
+        </div>
+
+        <div>
+          <label class="block font-semibold mb-1">Adicionar fotos</label>
+          <input type="file" multiple ref="fotosInput" />
+          <div class="flex items-center gap-3 mt-2">
             <button
+              class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              :disabled="uploadingFotos"
               type="button"
-              class="absolute top-1 right-1 bg-red-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
-              @click="apagarFoto(foto.id)"
+              @click="uploadFotos"
             >
-              X
+              {{ uploadingFotos ? 'A enviar...' : 'Enviar fotos' }}
             </button>
+
+            <p class="text-xs text-gray-500">Pode selecionar várias imagens.</p>
+          </div>
+
+          <div v-if="errors['fotos.*']" class="text-red-600 text-sm mt-2">
+            {{ errors['fotos.*'][0] }}
+          </div>
+          <div v-if="errors.fotos" class="text-red-600 text-sm mt-2">
+            {{ errors.fotos[0] }}
           </div>
         </div>
 
-        <div v-else class="text-sm text-gray-400 italic">
-          Nenhuma foto ainda.
+        <div v-if="fotosExistentes.length === 0" class="text-gray-500">
+          Ainda não há fotos.
         </div>
-      </div>
 
-      <button
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-        :disabled="saving"
-      >
-        {{ saving ? 'A guardar...' : 'Guardar' }}
-      </button>
-    </form>
+        <div v-else class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div
+            v-for="f in fotosExistentes"
+            :key="f.id"
+            class="border rounded overflow-hidden"
+          >
+            <div class="aspect-square bg-gray-50 overflow-hidden">
+              <img
+                v-if="f.url"
+                :src="f.url"
+                alt="Foto"
+                class="w-full h-full object-cover"
+              />
+              <div v-else class="p-2 text-xs text-gray-500">
+                Sem URL (ajusta o backend para devolver url)
+              </div>
+            </div>
+
+            <div class="p-2 flex items-center justify-between">
+              <span class="text-xs text-gray-600">#{{ f.id }}</span>
+
+              <button
+                class="text-red-600 text-sm hover:underline disabled:opacity-50"
+                type="button"
+                :disabled="deletingFotoId === f.id"
+                @click="deleteFoto(f.id)"
+              >
+                {{ deletingFotoId === f.id ? 'A eliminar...' : 'Eliminar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        
+      </div>
+    </div>
   </AdminLayout>
 </template>

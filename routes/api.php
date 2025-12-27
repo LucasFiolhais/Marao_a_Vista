@@ -8,8 +8,11 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\AlojamentoController;
 use App\Http\Controllers\Api\ComentarioController;
-use App\Http\Controllers\Admin\ComentarioController as ComentariosController;
+use App\Http\Controllers\Admin\ComentarioController as AdminComentariosController;
 use App\Http\Controllers\Admin\UtilizadoresController;
+use App\Http\Controllers\Admin\AlojamentoController as AdminAlojamentoController;
+use App\Http\Controllers\Admin\ReservaController as AdminReservaController;
+use App\Http\Controllers\Admin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,25 +83,49 @@ Route::post('/pagamentos/webhook', [PaymentController::class, 'webhook']);
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum','role:admin'])
+    ->prefix('admin')
+    ->group(function () {
+        // ---------- utilizadrores (PAGES) ----------
+        Route::get('/utilizadores', [UtilizadoresController::class, 'index']);
+        Route::post('/utilizadores', [UtilizadoresController::class, 'store']);
+        Route::get('/utilizadores/{user}', [UtilizadoresController::class, 'show']);
+        Route::put('/utilizadores/{user}', [UtilizadoresController::class, 'update']);
+        Route::delete('/utilizadores/{user}', [UtilizadoresController::class, 'destroy']);
+        Route::get('/roles', [UtilizadoresController::class, 'roles']);
+        Route::get('/options/utilizadores', [UtilizadoresController::class, 'options']);
 
-    // Reservas admin
-    Route::prefix('reservas')->group(function () {
-        Route::get('/', [ReservaController::class, 'indexAdmin']);
-        Route::patch('/{reserva}/status', [ReservaController::class, 'updateStatus']);
+
+        // ---------- alojamentos (PAGES) ----------
+        Route::get('/alojamentos', [AdminAlojamentoController::class, 'index']);
+        Route::post('/alojamentos', [AdminAlojamentoController::class, 'store']);
+        Route::get('/alojamentos/{alojamento}', [AdminAlojamentoController::class, 'show']);
+        Route::put('/alojamentos/{alojamento}', [AdminAlojamentoController::class, 'update']);
+        Route::delete('/alojamentos/{alojamento}', [AdminAlojamentoController::class, 'destroy']);
+        Route::post('/alojamentos/{alojamento}/fotos', [AdminAlojamentoController::class, 'uploadFotos']);
+        Route::delete('/alojamentos/fotos/{foto}', [AlojamentoController::class, 'deleteFoto']);
+        Route::get('/options/alojamentos', [AdminAlojamentoController::class, 'options']);
+
+
+ 
+        // ---------- reservas (PAGES) ----------
+       Route::get('/reservas', [AdminReservaController::class, 'index']);
+        Route::post('/reservas', [AdminReservaController::class, 'store']);
+        Route::get('/reservas/{reserva}', [AdminReservaController::class, 'show']);
+        Route::put('/reservas/{reserva}', [AdminReservaController::class, 'update']);
+        Route::patch('/reservas/{reserva}/cancelar', [AdminReservaController::class, 'cancelar']);
+        Route::delete('/reservas/{reserva}', [AdminReservaController::class, 'destroy']);
+
+
+          // ---------- comentarios (PAGES) ----------
+         Route::get('/comentarios', [AdminComentariosController::class, 'index']);
+        Route::post('/comentarios/{comentario}/aprovar', [AdminComentariosController::class, 'aprovar']);
+        Route::delete('/comentarios/{comentario}', [AdminComentariosController::class, 'destroy']);
+        Route::post('/comentarios/{comentario}/responder', [AdminComentariosController::class, 'responder']);
+
+          // ---------- dashboard (PAGES) ----------
+           Route::get('/dashboard', [DashboardController::class, 'index']);
     });
 
-    // Comentários admin
-    Route::prefix('comentarios')->group(function () {
-        Route::get('/', [ComentariosController::class, 'index']);
-        Route::delete('/{id}', [ComentariosController::class, 'destroy']);
-        Route::patch('/{id}/toggle', [ComentariosController::class, 'toggleAprovado']);
-    });
 
-    // Utilizadores admin
-    Route::apiResource('utilizadores', UtilizadoresController::class);
-
-    // Alojamentos admin
-    Route::apiResource('alojamentos', AlojamentoController::class)->except(['index', 'show']);
-});
-
+    

@@ -1,177 +1,299 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import backend from '@/axiosBackend'
+import http from '@/http'
 
 const alojamentos = ref([])
-const pagination = ref({})
-const loading = ref(true)
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  next_page_url: null,
+  prev_page_url: null,
+})
 
-// índice da foto atual por alojamento: { [id]: number }
-const currentPhotoIndex = ref({})
+const loading = ref(false)
+const errorMsg = ref('')
+const deletingId = ref(null)
 
-const fetchAlojamentos = async (page = 1) => {
+const q = ref('')
+
+// 👇 índice da foto atual por alojamento (key = alojamento.id)
+const fotoIndex = ref({})
+
+const normalizeApiUrl = (url) => {
+  if (!url) return null
+  return url.replace(/^.*\/api/, '')
+}
+
+const setDefaultFotoIndex = (items) => {
+  // garante que cada alojamento começa na foto 0
+  const map = { ...fotoIndex.value }
+  items.forEach((a) => {
+    if (map[a.id] === undefined) map[a.id] = 0
+  })
+  fotoIndex.value = map
+}
+
+const fetchAlojamentos = async (url = null) => {
   loading.value = true
+  errorMsg.value = ''
 
   try {
-    const res = await backend.get('/alojamentos', { params: { page } })
-    alojamentos.value = res.data.data
-    pagination.value = res.data
-  } catch (error) {
-    console.error('Erro ao carregar alojamentos:', error)
+    if (url) {
+      const endpoint = normalizeApiUrl(url)
+      const res = await http.get(endpoint)
+
+      const items = Array.isArray(res.data?.data) ? res.data.data : []
+      alojamentos.value = items
+      setDefaultFotoIndex(items)
+
+      pagination.value = {
+        current_page: res.data.current_page ?? 1,
+        last_page: res.data.last_page ?? 1,
+        next_page_url: res.data.next_page_url ?? null,
+        prev_page_url: res.data.prev_page_url ?? null,
+      }
+      return
+    }
+
+    const res = await http.get('/admin/alojamentos', {
+      params: { q: q.value || undefined },
+    })
+
+    const items = Array.isArray(res.data?.data) ? res.data.data : []
+    alojamentos.value = items
+    setDefaultFotoIndex(items)
+
+    pagination.value = {
+      current_page: res.data.current_page ?? 1,
+      last_page: res.data.last_page ?? 1,
+      next_page_url: res.data.next_page_url ?? null,
+      prev_page_url: res.data.prev_page_url ?? null,
+    }
+  } catch (e) {
+    console.error(e)
+    errorMsg.value = 'Erro ao carregar alojamentos.'
+    alojamentos.value = []
   } finally {
     loading.value = false
   }
 }
 
 const deleteAlojamento = async (id) => {
-  if (!confirm('Eliminar alojamento?')) return
+  if (!confirm('Eliminar este alojamento?')) return
 
+  deletingId.value = id
   try {
-    await backend.delete(`/alojamentos/${id}`)
-    await fetchAlojamentos(pagination.value.current_page || 1)
-  } catch (error) {
-    console.error('Erro ao eliminar alojamento:', error)
+    await http.delete(`/admin/alojamentos/${id}`)
+    await fetchAlojamentos()
+  } catch (e) {
+    console.error(e)
+    alert('Erro ao eliminar alojamento.')
+  } finally {
+    deletingId.value = null
   }
 }
 
-// devolve a foto atual (ou null se não houver)
-const getCurrentPhoto = (alojamento) => {
-  const fotos = alojamento.fotos || []
-  if (!fotos.length) return null
+const getFotos = (a) => Array.isArray(a?.fotos) ? a.fotos : []
 
-  const index = currentPhotoIndex.value[alojamento.id] ?? 0
-  return fotos[index]
+const getFotoAtualUrl = (a) => {
+  const fotos = getFotos(a)
+  if (fotos.length > 0) {
+    const idx = fotoIndex.value[a.id] ?? 0
+    return fotos[idx]?.url ?? null
+  }
+  // fallback para capa
+  return a.foto_capa_url ?? null
 }
 
-const nextPhoto = (alojamento) => {
-  const fotos = alojamento.fotos || []
+const prevFoto = (a) => {
+  const fotos = getFotos(a)
+  if (fotos.length <= 1) return
+
+  const current = fotoIndex.value[a.id] ?? 0
+  fotoIndex.value = {
+    ...fotoIndex.value,
+    [a.id]: (current - 1 + fotos.length) % fotos.length,
+  }
+}
+
+const nextFoto = (a) => {
+  const fotos = getFotos(a)
+  if (fotos.length <= 1) return
+
+  const current = fotoIndex.value[a.id] ?? 0
+  fotoIndex.value = {
+    ...fotoIndex.value,
+    [a.id]: (current + 1) % fotos.length,
+  }
+}
+
+const goFoto = (a, idx) => {
+  const fotos = getFotos(a)
   if (!fotos.length) return
-
-  const actual = currentPhotoIndex.value[alojamento.id] ?? 0
-  const next = (actual + 1) % fotos.length
-  currentPhotoIndex.value = {
-    ...currentPhotoIndex.value,
-    [alojamento.id]: next,
-  }
+  fotoIndex.value = { ...fotoIndex.value, [a.id]: idx }
 }
 
-const prevPhoto = (alojamento) => {
-  const fotos = alojamento.fotos || []
-  if (!fotos.length) return
-
-  const actual = currentPhotoIndex.value[alojamento.id] ?? 0
-  const prev = (actual - 1 + fotos.length) % fotos.length
-  currentPhotoIndex.value = {
-    ...currentPhotoIndex.value,
-    [alojamento.id]: prev,
-  }
-}
-
+watch(q, () => fetchAlojamentos())
 onMounted(() => fetchAlojamentos())
 </script>
 
 <template>
-  <AdminLayout title="Gestão de Alojamentos">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">Quartos</h1>
+  <AdminLayout title="Gestão de Quartos">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+      <div class="flex-1 max-w-xl">
+        <input
+          v-model="q"
+          type="text"
+          placeholder="Pesquisar por título ou ID..."
+          class="w-full border rounded-lg px-3 py-2"
+        />
+      </div>
 
       <Link
         :href="route('admin.alojamentos.create')"
-        class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-center"
       >
         Criar Quarto
       </Link>
     </div>
 
-    <div v-if="loading">A carregar...</div>
+    <div v-if="errorMsg" class="mb-4 p-3 rounded bg-red-50 text-red-700">
+      {{ errorMsg }}
+    </div>
+
+    <div v-if="loading" class="py-8">A carregar...</div>
 
     <div v-else>
-      <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
+      <div v-if="alojamentos.length === 0" class="text-gray-500 bg-white p-6 rounded shadow">
+        Sem alojamentos.
+      </div>
+
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <div
           v-for="a in alojamentos"
           :key="a.id"
-          class="bg-white rounded-xl shadow overflow-hidden flex flex-col"
+          class="bg-white rounded-xl shadow overflow-hidden border"
         >
-          <!-- Área da imagem maior -->
-          <div class="relative h-56 md:h-64 bg-gray-200 flex items-center justify-center overflow-hidden">
-            <template v-if="(a.fotos && a.fotos.length) || a.foto_principal">
-              <img
-                :src="getCurrentPhoto(a)?.url || a.foto_principal"
-                alt="Foto do alojamento"
-                class="w-full h-full object-cover"
+          
+          <div class="relative h-60 bg-gray-100"> 
+            <img
+              v-if="getFotoAtualUrl(a)"
+              :src="getFotoAtualUrl(a)"
+              class="w-full h-full object-cover"
+              alt="Foto"
+            />
+
+            <!-- Setas (só aparecem se houver +1 foto) -->
+            <button
+              v-if="getFotos(a).length > 1"
+              type="button"
+              class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white w-9 h-9 rounded-full hover:bg-black/60 flex items-center justify-center"
+              @click="prevFoto(a)"
+              aria-label="Foto anterior"
+            >
+              ‹
+            </button>
+
+            <button
+              v-if="getFotos(a).length > 1"
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white w-9 h-9 rounded-full hover:bg-black/60 flex items-center justify-center"
+              @click="nextFoto(a)"
+              aria-label="Foto seguinte"
+            >
+              ›
+            </button>
+
+            <!-- Dots -->
+            <div
+              v-if="getFotos(a).length > 1"
+              class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/25 px-2 py-1 rounded-full"
+            >
+              <button
+                v-for="(f, idx) in getFotos(a)"
+                :key="f.id ?? idx"
+                type="button"
+                class="w-2 h-2 rounded-full"
+                :class="(fotoIndex[a.id] ?? 0) === idx ? 'bg-white' : 'bg-white/50'"
+                @click="goFoto(a, idx)"
+                aria-label="Ir para foto"
               />
-
-              <!-- setas -->
-              <template v-if="a.fotos && a.fotos.length > 1">
-                <button
-                  type="button"
-                  class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg"
-                  @click.stop="prevPhoto(a)"
-                >
-                  ‹
-                </button>
-
-                <button
-                  type="button"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg"
-                  @click.stop="nextPhoto(a)"
-                >
-                  ›
-                </button>
-
-                <!-- indicador de posição -->
-                <div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                  {{ (currentPhotoIndex[a.id] ?? 0) + 1 }}/{{ a.fotos.length }}
-                </div>
-              </template>
-            </template>
-
-            <span v-else class="text-gray-500 text-sm">
-              Sem foto
-            </span>
+            </div>
           </div>
 
-          <!-- Conteúdo do card -->
-          <div class="p-4 flex-1 flex flex-col">
-            <h2 class="font-semibold text-lg mb-1">
-              {{ a.titulo }}
-            </h2>
+          <div class="p-4 space-y-2">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="font-semibold text-lg leading-tight">
+                  {{ a.titulo }}
+                </h3>
+                <p class="text-xs text-gray-500">ID: {{ a.id }}</p>
+              </div>
 
-            <p class="text-sm text-gray-600 mb-3 line-clamp-4">
+              <div class="text-right">
+                <div class="font-semibold">
+                  {{ Number(a.preco_noite ?? 0).toFixed(2) }} €
+                </div>
+                <div class="text-xs text-gray-500">/ noite</div>
+              </div>
+            </div>
+
+            <p class="text-sm text-gray-600 line-clamp-2">
               {{ a.descricao }}
             </p>
 
-            <div class="mt-auto flex items-center justify-between pt-2 border-t">
-              <span class="font-bold text-indigo-700">
-                {{ a.preco_noite }} €
-                <span class="text-sm font-normal text-gray-500">/ noite</span>
-              </span>
+            <div class="pt-3 flex items-center justify-between">
+              <Link
+                :href="route('admin.alojamentos.edit', a.id)"
+                class="text-indigo-600 hover:underline"
+              >
+                Editar
+              </Link>
 
-              <div class="flex gap-2">
-                <Link
-                  :href="route('admin.alojamentos.edit', a.id)"
-                  class="bg-yellow-500 text-white text-sm px-3 py-1 rounded"
-                >
-                  Editar
-                </Link>
-
-                <button
-                  class="bg-red-600 text-white text-sm px-3 py-1 rounded"
-                  @click="deleteAlojamento(a.id)"
-                >
-                  Eliminar
-                </button>
-              </div>
+              <button
+                class="text-red-600 hover:underline disabled:opacity-50"
+                :disabled="deletingId === a.id"
+                @click="deleteAlojamento(a.id)"
+              >
+                {{ deletingId === a.id ? 'A eliminar...' : 'Eliminar' }}
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- (se quiseres depois, podemos pôr paginação visual aqui) -->
+      <div class="flex items-center justify-between mt-6">
+        <button
+          class="px-3 py-2 border rounded disabled:opacity-50"
+          :disabled="!pagination.prev_page_url"
+          @click="fetchAlojamentos(pagination.prev_page_url)"
+        >
+          Anterior
+        </button>
+
+        <div class="text-sm text-gray-600">
+          Página {{ pagination.current_page }} / {{ pagination.last_page }}
+        </div>
+
+        <button
+          class="px-3 py-2 border rounded disabled:opacity-50"
+          :disabled="!pagination.next_page_url"
+          @click="fetchAlojamentos(pagination.next_page_url)"
+        >
+          Próxima
+        </button>
+      </div>
     </div>
   </AdminLayout>
 </template>
+
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

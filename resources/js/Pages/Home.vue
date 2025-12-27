@@ -66,7 +66,7 @@
 <script setup>
 // Importa as funções do Vue
 import { onMounted } from 'vue';
-import axiosInstance from '../axiosFrontend';  // Importa a configuração do Axiosç
+import axiosInstance from '../axiosFrontend';  // Importa a configuração do Axios
 import Navbar from '../Components/NavBar.vue'; 
 
 // Variáveis e dados diretamente no script setup

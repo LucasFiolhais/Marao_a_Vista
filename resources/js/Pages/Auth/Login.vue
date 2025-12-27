@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
+import { ref, onMounted } from 'vue'
+import axiosInstance from '../../axiosFrontend'
 
 defineProps({
   canResetPassword: Boolean,
@@ -16,6 +18,7 @@ const form = useForm({
 const loginError = ref('')
 
 const submit = () => {
+<<<<<<< HEAD
   form
     .transform(data => ({
       ...data,
@@ -26,6 +29,42 @@ const submit = () => {
       onError: (errors) => {
         loginError.value = errors.email || 'Credenciais inválidas'
       },
+=======
+    form.transform(data => ({
+        ...data,
+        remember: form.remember ? 'on' : '',
+    })).post(route('login'), {
+        onFinish: () => form.reset('password'),
+        onSuccess: (response) => {
+            // Garante que o window existe antes de usar localStorage
+            if (typeof window !== 'undefined' && window.localStorage) {
+                // Guardar token (caso estejas a usar API personalizada)
+                localStorage.setItem('auth_token', response?.token ?? 'logged_in')
+                authToken.value = response?.token ?? 'logged_in'
+            }
+            console.log('Login bem-sucedido', response)
+        },
+        onError: (errors) => {
+        loginError.value = errors?.email || ''
+      }
+    })
+}
+
+// Função para logout
+const logout = () => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('auth_token')
+        authToken.value = null
+    }
+
+    console.log('✅ Logout local efetuado')
+
+    // Logout via Laravel API (opcional)
+    axiosInstance.post('/logout').then(() => {
+        console.log('✅ Logout API efetuado')
+    }).catch((error) => {
+        console.error('❌ Erro ao fazer logout na API', error)
+>>>>>>> e22edfc7231e05568e5d11c713872c32a40cb8d1
     })
 }
 </script>

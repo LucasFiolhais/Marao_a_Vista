@@ -1,316 +1,207 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import axios from '@/axiosBackend'
-import { router } from '@inertiajs/vue3'
-
-// 🔹 Estado reativo
-const loading = ref(false)
+import http from '@/http'
 
 const reservas = ref([])
-const pagination = ref({
-  current_page: 1,
-  last_page: 1,
-  next_page_url: null,
-  prev_page_url: null,
-})
+const pagination = ref({})
+const loading = ref(true)
 
-const filtros = ref({
-  search: '',
-  estado: 'todas',
-  alojamento_id: '',
-})
+// filtros
+const search = ref('')
+const estado = ref('todas')
+const alojamentoId = ref('')
+const perPage = ref(10)
 
-const estados = ref([])
+// dados para filtros
 const alojamentos = ref([])
+const estadosDisponiveis = ref([])
 
-// 🔹 Buscar reservas (com filtros e paginação)
-const fetchReservas = async (url = null) => {
+const fetchReservas = async (page = 1) => {
   loading.value = true
-
   try {
-    const response = await axios.get(url || '/reservas', {
+    const res = await http.get('/admin/reservas', {
       params: {
-        search: filtros.value.search || null,
-        estado: filtros.value.estado || null,
-        alojamento_id: filtros.value.alojamento_id || null,
-        page: pagination.value.current_page,
+        page,
+        per_page: perPage.value,
+        search: search.value || null,
+        estado: estado.value || null,
+        alojamento_id: alojamentoId.value || null,
       },
     })
 
-    const data = response.data
+    const payload = res.data || {}
 
-    reservas.value = Array.isArray(data?.reservas?.data)
-      ? data.reservas.data
-      : []
+    // ✅ o teu backend devolve: { reservas: paginator, alojamentos: [], estados: [] }
+    reservas.value = payload?.reservas?.data || []
+    pagination.value = payload?.reservas || {}
 
-    pagination.value = {
-      current_page: data.reservas.current_page,
-      last_page: data.reservas.last_page,
-      next_page_url: data.reservas.next_page_url,
-      prev_page_url: data.reservas.prev_page_url,
-    }
-
-    estados.value = data.estados || []
-    alojamentos.value = data.alojamentos || []
+    alojamentos.value = payload?.alojamentos || []
+    estadosDisponiveis.value = payload?.estados || []
   } catch (error) {
-    console.error('Erro ao carregar reservas:', error)
+    console.error('Erro ao carregar reservas:', error?.response?.status, error?.response?.data || error)
+    reservas.value = []
+    pagination.value = {}
   } finally {
     loading.value = false
   }
 }
 
-// 🔹 Ações de UI
-const aplicarFiltros = () => {
-  pagination.value.current_page = 1
-  fetchReservas()
+const aplicarFiltros = async () => {
+  await fetchReservas(1)
 }
 
-const limparFiltros = () => {
-  filtros.value = {
-    search: '',
-    estado: 'todas',
-    alojamento_id: '',
-  }
-  pagination.value.current_page = 1
-  fetchReservas()
+const limparFiltros = async () => {
+  search.value = ''
+  estado.value = 'todas'
+  alojamentoId.value = ''
+  perPage.value = 10
+  await fetchReservas(1)
 }
 
-const irParaPagina = (url) => {
-  if (!url) return
-  fetchReservas(url)
-}
-
-// ✅ Navegação (SEM Ziggy)
-const verReserva = (id) => {
-  router.visit(`/admin/reservas/${id}/editar`)
-}
-
-const editarReserva = (id) => {
-  router.visit(`/admin/reservas/${id}/editar`)
-}
-
-const irParaCriarReserva = () => {
-  router.visit('/admin/reservas/criar')
-}
-
-// ✅ ÚNICA ação de estado: cancelar
-const cancelarReserva = async (reserva) => {
-  if (reserva.estado === 'cancelado') return
-
-  if (!confirm(`Cancelar a reserva #${reserva.id}?`)) return
-
+const cancelarReserva = async (id) => {
+  if (!confirm('Cancelar esta reserva?')) return
   try {
-    await axios.patch(`/reservas/${reserva.id}/cancelar`)
-    reserva.estado = 'cancelado'
+    await http.patch(`/admin/reservas/${id}/cancelar`)
+    await fetchReservas(pagination.value.current_page || 1)
   } catch (error) {
-    alert('Não foi possível cancelar a reserva.')
+    console.error('Erro ao cancelar reserva:', error?.response?.status, error?.response?.data || error)
   }
 }
 
-// 👉 Apagar reserva
-const apagarReserva = async (reserva) => {
-  if (!confirm(`Apagar a reserva #${reserva.id}?`)) return
-
+const apagarReserva = async (id) => {
+  if (!confirm('Eliminar esta reserva?')) return
   try {
-    await axios.delete(`/reservas/${reserva.id}`)
-    await fetchReservas()
+    await http.delete(`/admin/reservas/${id}`)
+    await fetchReservas(pagination.value.current_page || 1)
   } catch (error) {
-    console.error('Erro ao apagar reserva:', error)
+    console.error('Erro ao eliminar reserva:', error?.response?.status, error?.response?.data || error)
   }
 }
 
-// Carregar na montagem
-onMounted(() => {
-  fetchReservas()
-})
+const badgeEstadoClass = (e) => {
+  if (e === 'confirmado') return 'bg-green-100 text-green-800'
+  if (e === 'pendente') return 'bg-yellow-100 text-yellow-800'
+  if (e === 'cancelado') return 'bg-red-100 text-red-800'
+  return 'bg-gray-100 text-gray-800'
+}
+
+onMounted(() => fetchReservas())
 </script>
 
 <template>
   <AdminLayout title="Gestão de Reservas">
-    <!-- 1️⃣ Header da Página -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <p class="text-sm text-gray-500">
-          Central de operações das reservas do sistema.
-        </p>
+    <div class="flex justify-between items-center mb-4">
+      <div class="flex gap-2">
+        <input
+          v-model="search"
+          class="border px-3 py-2 rounded w-64"
+          placeholder="Pesquisar por ID ou referência"
+          @keyup.enter="aplicarFiltros"
+        />
+
+        <select v-model="estado" class="border px-3 py-2 rounded pr-10 rounded min-w-[180px]" @change="aplicarFiltros">
+          <option value="todas">Todos os estados</option>
+          <option v-for="e in estadosDisponiveis" :key="e" :value="e">
+            {{ e }}
+          </option>
+        </select>
+
+        <select v-model="alojamentoId" class="border px-3 py-2 rounded pr-10 rounded min-w-[180px]" @change="aplicarFiltros">
+          <option value="">Todos os alojamentos</option>
+          <option v-for="a in alojamentos" :key="a.id" :value="a.id">
+            {{ a.titulo }}
+          </option>
+        </select>
+
+        <select v-model.number="perPage" class="border px-3 py-2 rounded pr-10 rounded min-w-[180px]" @change="aplicarFiltros">
+          <option :value="10">10</option>
+          <option :value="25">25</option>
+          <option :value="50">50</option>
+        </select>
+
+        <button class="border px-4 py-2 rounded" @click="limparFiltros">
+          Limpar
+        </button>
       </div>
 
-      <button
-        type="button"
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow hover:bg-indigo-700 transition"
-        @click="irParaCriarReserva"
+      <Link
+        :href="route('admin.reservas.create')"
+        class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
       >
-        + Criar Reserva
-      </button>
+        Criar Reserva
+      </Link>
     </div>
 
-    <!-- 2️⃣ Zona de Filtros -->
-    <div class="bg-white shadow rounded-lg p-4 mb-6">
-      <div class="flex flex-wrap gap-4 items-end">
-        <!-- Pesquisa por ID -->
-        <div class="flex-1 min-w-[150px]">
-          <label class="block text-xs font-semibold text-gray-600 mb-1">
-            ID da Reserva
-          </label>
-          <input
-            v-model="filtros.search"
-            type="text"
-            placeholder="Ex: 152"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
+    <div v-if="loading">A carregar...</div>
 
-        <!-- Estado -->
-        <div class="w-40">
-          <label class="block text-xs font-semibold text-gray-600 mb-1">
-            Estado
-          </label>
-          <select
-            v-model="filtros.estado"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="todas">Todas</option>
-            <option v-for="estado in estados" :key="estado" :value="estado">
-              {{ estado.charAt(0).toUpperCase() + estado.slice(1) }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Alojamento -->
-        <div class="w-56">
-          <label class="block text-xs font-semibold text-gray-600 mb-1">
-            Alojamento
-          </label>
-          <select
-            v-model="filtros.alojamento_id"
-            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">Todos</option>
-            <option v-for="aloj in alojamentos" :key="aloj.id" :value="aloj.id">
-              {{ aloj.titulo }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Botões -->
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
-            @click="aplicarFiltros"
-          >
-            Filtrar
-          </button>
-
-          <button
-            type="button"
-            class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
-            @click="limparFiltros"
-          >
-            Limpar filtros
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3️⃣ Tabela Principal -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-      <div v-if="loading" class="p-4 text-sm text-gray-500">
-        A carregar reservas...
-      </div>
-
-      <table v-else class="min-w-full text-sm">
-        <thead class="bg-gray-100 text-left text-xs font-semibold text-gray-600">
-          <tr>
-            <th class="px-4 py-3">ID</th>
-            <th class="px-4 py-3">Cliente</th>
-            <th class="px-4 py-3">Alojamento</th>
-            <th class="px-4 py-3">Check-in</th>
-            <th class="px-4 py-3">Check-out</th>
-            <th class="px-4 py-3 text-center">Pessoas</th>
-            <th class="px-4 py-3">Estado</th>
-            <th class="px-4 py-3 text-right">Preço Total (€)</th>
-            <th class="px-4 py-3 text-right">Ações</th>
+    <div v-else>
+      <table class="min-w-full bg-white rounded shadow">
+        <thead>
+          <tr class="bg-gray-200 text-left">
+            <th class="p-3">ID</th>
+            <th class="p-3">Referência</th>
+            <th class="p-3">Cliente</th>
+            <th class="p-3">Alojamento</th>
+            <th class="p-3">Datas</th>
+            <th class="p-3 text-center">Estado</th>
+            <th class="p-3 text-right">Total</th>
+            <th class="p-3 text-center w-64">Ações</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr
-            v-for="reserva in reservas"
-            :key="reserva.id"
-            class="border-t text-gray-700 hover:bg-gray-50"
-          >
-            <td class="px-4 py-3 text-xs font-mono">#{{ reserva.id }}</td>
+          <tr v-for="r in reservas" :key="r.id" class="border-b">
+            <td class="p-3">{{ r.id }}</td>
+            <td class="p-3">{{ r.referencia || '-' }}</td>
 
-            <td class="px-4 py-3">
-              <div class="text-xs font-semibold">
-                {{ reserva.user?.name || 'N/D' }}
-              </div>
-              <div class="text-[11px] text-gray-500">
-                {{ reserva.user?.email }}
+            <td class="p-3">
+              <div class="text-sm">
+                <div class="font-medium">{{ r.user?.name || '—' }}</div>
+                <div class="text-gray-500">{{ r.user?.email || '' }}</div>
               </div>
             </td>
 
-            <td class="px-4 py-3 text-xs">
-              {{ reserva.alojamento?.titulo || 'N/D' }}
+            <td class="p-3">{{ r.alojamento?.titulo || '—' }}</td>
+
+            <td class="p-3">
+              <div class="text-sm">
+                <div>{{ r.checkin }} → {{ r.checkout }}</div>
+                <div class="text-gray-500">{{ r.hospedes }} hóspede(s)</div>
+              </div>
             </td>
 
-            <td class="px-4 py-3 text-xs">{{ reserva.checkin }}</td>
-            <td class="px-4 py-3 text-xs">{{ reserva.checkout }}</td>
-
-            <td class="px-4 py-3 text-center text-xs">{{ reserva.hospedes }}</td>
-
-            <!-- Badge de estado -->
-            <td class="px-4 py-3">
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
-                :class="{
-                  'bg-yellow-100 text-yellow-800': reserva.estado === 'pendente',
-                  'bg-green-100 text-green-800': reserva.estado === 'confirmado',
-                  'bg-red-100 text-red-800': reserva.estado === 'cancelado',
-                }"
-              >
-                {{ reserva.estado }}
+            <td class="p-3 text-center">
+              <span class="inline-block text-xs px-2 py-1 rounded" :class="badgeEstadoClass(r.estado)">
+                {{ r.estado }}
               </span>
             </td>
 
-            <td class="px-4 py-3 text-right text-xs font-semibold">
-              {{ Number(reserva.total).toFixed(2) }} €
+            <td class="p-3 text-right">
+              {{ Number(r.total || 0).toFixed(2) }} €
             </td>
 
-            <!-- Ações -->
-            <td class="px-4 py-3 text-right">
-              <div class="flex justify-end gap-2 text-[11px]">
-                <button
-                  class="px-2 py-1 border rounded hover:bg-gray-100"
-                  title="Ver detalhes"
-                  @click="verReserva(reserva.id)"
-                >
-                  Ver
-                </button>
-
-                <button
-                  class="px-2 py-1 border rounded hover:bg-gray-100"
-                  title="Editar"
-                  @click="editarReserva(reserva.id)"
+            <td class="p-3">
+              <div class="flex justify-center gap-2">
+                <Link
+                  :href="route('admin.reservas.edit', r.id)"
+                  class="bg-yellow-500 text-white px-3 py-1 rounded"
                 >
                   Editar
-                </button>
+                </Link>
 
                 <button
-                  v-if="reserva.estado !== 'cancelado'"
-                  class="px-2 py-1 border rounded hover:bg-red-50 text-red-600"
-                  title="Cancelar"
-                  @click="cancelarReserva(reserva)"
+                  v-if="r.estado !== 'cancelado'"
+                  class="bg-red-600 text-white px-3 py-1 rounded"
+                  @click="cancelarReserva(r.id)"
                 >
                   Cancelar
                 </button>
 
                 <button
-                  class="px-2 py-1 border rounded text-red-600 hover:bg-red-50"
-                  title="Apagar"
-                  @click="apagarReserva(reserva)"
+                  class="bg-gray-800 text-white px-3 py-1 rounded"
+                  @click="apagarReserva(r.id)"
                 >
                   Apagar
                 </button>
@@ -318,39 +209,36 @@ onMounted(() => {
             </td>
           </tr>
 
-          <tr v-if="!reservas.length && !loading">
-            <td colspan="9" class="px-4 py-6 text-center text-xs text-gray-500">
-              Nenhuma reserva encontrada com os filtros atuais.
+          <tr v-if="!reservas.length">
+            <td class="p-6 text-center text-gray-500" colspan="8">
+              Sem reservas para mostrar.
             </td>
           </tr>
         </tbody>
       </table>
-    </div>
 
-    <!-- 5️⃣ Paginação -->
-    <div class="mt-4 flex items-center justify-between text-xs text-gray-600">
-      <div>
-        Página {{ pagination.current_page }} de {{ pagination.last_page }}
-      </div>
+      <!-- Paginação simples -->
+      <div class="flex justify-between items-center mt-4">
+        <div class="text-sm text-gray-600">
+          Página {{ pagination.current_page || 1 }} de {{ pagination.last_page || 1 }}
+        </div>
 
-      <div class="flex gap-2">
-        <button
-          type="button"
-          class="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="!pagination.prev_page_url"
-          @click="irParaPagina(pagination.prev_page_url)"
-        >
-          Anterior
-        </button>
-
-        <button
-          type="button"
-          class="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="!pagination.next_page_url"
-          @click="irParaPagina(pagination.next_page_url)"
-        >
-          Seguinte
-        </button>
+        <div class="flex gap-2">
+          <button
+            class="border px-3 py-1 rounded disabled:opacity-50"
+            :disabled="!pagination.prev_page_url"
+            @click="fetchReservas((pagination.current_page || 1) - 1)"
+          >
+            ← Anterior
+          </button>
+          <button
+            class="border px-3 py-1 rounded disabled:opacity-50"
+            :disabled="!pagination.next_page_url"
+            @click="fetchReservas((pagination.current_page || 1) + 1)"
+          >
+            Seguinte →
+          </button>
+        </div>
       </div>
     </div>
   </AdminLayout>

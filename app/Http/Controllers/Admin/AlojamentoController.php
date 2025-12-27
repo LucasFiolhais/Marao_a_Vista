@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Alojamento;
-use App\Models\Foto; // 👈 IMPORTANTE
+use App\Models\Foto; // IMPORTANTE
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage; // 👈 IMPORTANTE
+use Illuminate\Support\Facades\Storage; // IMPORTANTE
 
 class AlojamentoController extends Controller
 {
@@ -17,23 +17,25 @@ class AlojamentoController extends Controller
         ->paginate(10);
 
     $alojamentos->getCollection()->transform(function ($a) {
-        $fotoPrincipal = $a->fotos->first();
+        $fotoCapa = $a->fotos->sortBy('id')->first();
 
         return [
-            'id'             => $a->id,
-            'titulo'         => $a->titulo,
-            'descricao'      => $a->descricao,
-            'preco_noite'    => $a->preco_noite,
-            'created_at'     => $a->created_at,
-            'foto_principal' => $fotoPrincipal
-                ? asset('storage/' . $fotoPrincipal->path)
+            'id'            => $a->id,
+            'titulo'        => $a->titulo,
+            'descricao'     => $a->descricao,
+            'preco_noite'   => $a->preco_noite,
+            'created_at'    => $a->created_at,
+
+            // CAPA (1ª foto)
+            'foto_capa_url' => $fotoCapa
+                ? Storage::disk('public')->url($fotoCapa->path)
                 : null,
-            'fotos'          => $a->fotos->map(function ($foto) {
-                return [
-                    'id'  => $foto->id,
-                    'url' => asset('storage/' . $foto->path),
-                ];
-            })->values(),
+
+            // galeria completa (para edit)
+            'fotos' => $a->fotos->map(fn ($foto) => [
+                'id'  => $foto->id,
+                'url' => Storage::disk('public')->url($foto->path),
+            ])->values(),
         ];
     });
 
@@ -175,4 +177,13 @@ class AlojamentoController extends Controller
 
         return response()->json(['message' => 'Foto eliminada.']);
     }
+
+        public function options()
+    {
+    return response()->json(
+        Alojamento::select('id', 'titulo')
+            ->orderBy('titulo')
+            ->get()
+    );
+}
 }

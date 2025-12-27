@@ -37,6 +37,16 @@ Route::get('/complete-registration', function () {
 |--------------------------------------------------------------------------
 */
 
+Route::middleware(['signed', 'throttle:6,1'])->group(function () {
+    Route::get('/complete-registration/{id}/{hash}', [CompleteRegistrationController::class, 'show'])
+        ->name('complete-registration.show');
+
+    Route::post('/complete-registration/{id}/{hash}', [CompleteRegistrationController::class, 'store'])
+        ->name('complete-registration.store');
+});
+
+
+
     Route::middleware([
         'auth:sanctum',
         config('jetstream.auth_session'),
@@ -126,36 +136,23 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         //admin  (DASHBOARD)
         Route::get('/', fn () => Inertia::render('Admin/Dashboard'))
             ->name('dashboard');
-        Route::get('/reservas', fn () => Inertia::render('Admin/RservasAdmin'))
-            ->name('reservas');
-        Route::get('/alojamento', fn () => Inertia::render('Admin/AlojamentoAdmin'))
-            ->name('alojamento');
+    
         Route::get('/comentarios', fn () => Inertia::render('Admin/ComentariosAdmin'))
-            ->name('comentarios');
+        ->name('comentarios');
 
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | UTILIZADORES – Páginas Admin
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/utilizadores', fn() => Inertia::render('Admin/Utilizadores/Index'))
+        // PÁGINAS (Utilizadores)
+        Route::get('/utilizadores', fn () => Inertia::render('Admin/Utilizadores/Index'))
         ->name('utilizadores');
 
-    Route::get('/utilizadores/criar', fn() => Inertia::render('Admin/Utilizadores/Create'))
+        Route::get('/utilizadores/create', fn () => Inertia::render('Admin/Utilizadores/Create'))
         ->name('utilizadores.create');
 
-    Route::get('/utilizadores/{id}/editar', fn($id) =>
-        Inertia::render('Admin/Utilizadores/Edit', ['id' => $id])
-    )->name('utilizadores.edit');
-
-    /*
-    |--------------------------------------------------------------------------
-    | ALOJAMENTOS – Páginas Admin
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/alojamentos', fn () =>
+        Route::get('/utilizadores/{id}/edit', fn ($id) => Inertia::render('Admin/Utilizadores/Edit', [
+        'id' => $id
+]))
+        ->name('utilizadores.edit');
+        // PÁGINAS (Alojamentos)
+        Route::get('/alojamentos', fn () =>
         Inertia::render('Admin/Alojamentos/Index')
     )->name('alojamentos');
 
@@ -166,9 +163,15 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('/alojamentos/{id}/editar', fn ($id) =>
         Inertia::render('Admin/Alojamentos/Edit', ['id' => $id])
     )->name('alojamentos.edit');
+<<<<<<< HEAD
 
       // ---------- Reservas (PAGES) ----------
 
+=======
+    
+
+    // PÁGINAS (Reservas)
+>>>>>>> e22edfc7231e05568e5d11c713872c32a40cb8d1
     Route::get('/reservas', fn () =>
         Inertia::render('Admin/Reservas/Index')   // <--- o teu componente atual
     )->name('reservas');
@@ -183,6 +186,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Inertia::render('Admin/Reservas/Edit', ['id' => $id])
     )->name('reservas.edit');
 
+<<<<<<< HEAD
 
 
 
@@ -236,3 +240,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
 
 });
+=======
+});
+
+
+
+   
+    
+    
+>>>>>>> e22edfc7231e05568e5d11c713872c32a40cb8d1
