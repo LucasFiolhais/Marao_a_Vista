@@ -1,4 +1,4 @@
-w<script setup>
+<script setup>
 import { useForm } from '@inertiajs/vue3'
 import AuthenticationCard from '@/Components/AuthenticationCard.vue'
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue'

@@ -163,15 +163,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     Route::get('/alojamentos/{id}/editar', fn ($id) =>
         Inertia::render('Admin/Alojamentos/Edit', ['id' => $id])
     )->name('alojamentos.edit');
-<<<<<<< HEAD
 
       // ---------- Reservas (PAGES) ----------
 
-=======
     
 
     // PÁGINAS (Reservas)
->>>>>>> e22edfc7231e05568e5d11c713872c32a40cb8d1
     Route::get('/reservas', fn () =>
         Inertia::render('Admin/Reservas/Index')   // <--- o teu componente atual
     )->name('reservas');
@@ -186,7 +183,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Inertia::render('Admin/Reservas/Edit', ['id' => $id])
     )->name('reservas.edit');
 
-<<<<<<< HEAD
 
 
 
@@ -240,12 +236,9 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
     });
 
 });
-=======
-});
 
 
 
    
     
     
->>>>>>> e22edfc7231e05568e5d11c713872c32a40cb8d1
