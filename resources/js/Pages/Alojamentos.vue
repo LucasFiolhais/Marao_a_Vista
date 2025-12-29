@@ -64,10 +64,10 @@ const prevPhoto = (alojamento) => {
           <!-- IMAGEM -->
           <div class="relative h-56 bg-gray-200 overflow-hidden">
             <template v-if="q.fotos?.length">
-              <img
-                :src="getCurrentPhoto(q)?.url"
-                class="w-full h-full object-cover"
-              />
+            <img
+              :src="`/storage/${getCurrentPhoto(q)?.path}`"
+              class="w-full h-full object-cover"
+            />
 
               <!-- SETAS -->
               <button
@@ -102,14 +102,14 @@ const prevPhoto = (alojamento) => {
 
           <!-- TEXTO -->
           <div class="p-4 flex flex-col">
-            <h2 class="font-bold text-xl mb-2">{{ q.nome }}</h2>
+            <h2 class="font-bold text-xl mb-2">{{ q.titulo }}</h2>
 
             <p class="text-gray-600 text-sm line-clamp-3 mb-3">
               {{ q.descricao }}
             </p>
 
             <p class="text-accent font-bold mb-4">
-              {{ q.preco }}€
+              {{ q.preco_noite }}€
               <span class="text-gray-500 text-sm font-normal">/ noite</span>
             </p>
 

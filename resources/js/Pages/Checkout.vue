@@ -1,33 +1,46 @@
 <script setup>
-import { ref } from "vue"
-import axios from "@/axiosFrontend"
+import { ref, onMounted } from "vue"
 import { router, usePage, Link } from "@inertiajs/vue3"
 import Navbar from "@/Components/NavBar.vue"
+import axios from "@/axiosFrontend"
 
 const page = usePage()
-const reserva = page.props.reserva
+const reserva = ref(null)
+
 const pagando = ref(false)
 const erro = ref(null)
 const sucesso = ref(null)
 
+onMounted(async () => {
+  const id = page.url.split("/").pop()
+
+  const res = await axios.get(`/reservas/${id}`)
+  reserva.value = res.data
+})
+
 const pagar = async () => {
+  if (!reserva.value) return
+
   pagando.value = true
   erro.value = null
   sucesso.value = null
 
   try {
-    const res = await axios.post(`/api/pagamentos/checkout/${reserva.id}`)
-    
-    sucesso.value = "Pedido de pagamento criado! Aguarde confirmação no MBWay."
-    console.log(res.data)
+    const res = await axios.post(
+      `/pagamentos/checkout/${reserva.value.id}`
+    )
 
-    if (res.data.redirect) {
-      router.visit(res.data.redirect)
+    console.log("Pagamento criado:", res.data)
+
+    if (res.data.payment_url) {
+      window.location.href = res.data.payment_url
+    } else {
+      sucesso.value = "Pagamento criado com sucesso."
     }
 
   } catch (e) {
     erro.value = "Erro ao criar pagamento."
-    console.error(e)
+    console.error(e.response?.data || e)
   } finally {
     pagando.value = false
   }
@@ -37,17 +50,25 @@ const pagar = async () => {
 <template>
   <Navbar />
 
-  <div class="max-w-3xl mx-auto mt-28 px-4">
-    <h1 class="text-3xl font-bold text-dark mb-6">Checkout da Reserva</h1>
+  <div
+    v-if="reserva"
+    class="max-w-3xl mx-auto mt-28 px-4"
+  >
+    <h1 class="text-3xl font-bold text-dark mb-6">
+      Checkout da Reserva
+    </h1>
 
     <div class="bg-white shadow rounded-lg p-6">
-      
-      <!-- Dados do alojamento -->
-      <h2 class="text-xl font-semibold text-dark">{{ reserva.alojamento.titulo }}</h2>
-      <p class="text-gray-600">{{ reserva.data_inicio }} → {{ reserva.data_fim }}</p>
+      <h2 class="text-xl font-semibold text-dark">
+        {{ reserva.alojamento.titulo }}
+      </h2>
+
+      <p class="text-gray-600">
+        {{ reserva.checkin }} → {{ reserva.checkout }}
+      </p>
 
       <p class="mt-4 text-lg font-bold text-dark">
-        Total: {{ reserva.preco_total }} €
+        Total: {{ reserva.total }} €
       </p>
 
       <div class="mt-6">
@@ -60,11 +81,18 @@ const pagar = async () => {
         </button>
       </div>
 
-      <!-- Mensagens -->
-      <p v-if="sucesso" class="mt-4 text-green-600 font-medium">{{ sucesso }}</p>
-      <p v-if="erro" class="mt-4 text-red-600 font-medium">{{ erro }}</p>
+      <p v-if="sucesso" class="mt-4 text-green-600 font-medium">
+        {{ sucesso }}
+      </p>
+      <p v-if="erro" class="mt-4 text-red-600 font-medium">
+        {{ erro }}
+      </p>
     </div>
+  </div>
 
+  <!-- opcional: loading -->
+  <div v-else class="text-center mt-40 text-gray-500">
+    A carregar reserva…
   </div>
 </template>
 

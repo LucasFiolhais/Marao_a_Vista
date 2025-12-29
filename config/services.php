@@ -39,6 +39,7 @@ return [
         'key' => env('OPENWEATHER_API_KEY'),
         'city' => env('OPENWEATHER_CITY', 'Peso da Régua'),
     ],
+    
     'easypay' => [
         'base_url'   => env('EASYPAY_BASE_URL', 'https://api.test.easypay.pt/2.0'),
         'api_key'    => env('EASYPAY_API_KEY'),

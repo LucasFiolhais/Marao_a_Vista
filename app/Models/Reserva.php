@@ -18,14 +18,20 @@ class Reserva extends Model
         'observacoes'
     ];
 
-  public static function calcularPreco($inicio, $fim, $alojamentoId)
-{
-    $dias = (new \DateTime($inicio))->diff(new \DateTime($fim))->days;
-    $alojamento = \App\Models\Alojamento::find($alojamentoId);
-    $precoPorNoite = $alojamento ? $alojamento->preco_noite : 100;
-    return $dias * $precoPorNoite;
-}
+    private function calcularPreco($checkin, $checkout, $alojamento)
+    {
+        $inicio = \Carbon\Carbon::parse($checkin);
+        $fim = \Carbon\Carbon::parse($checkout);
 
+        $noites = $inicio->diffInDays($fim);
+
+        if ($noites <= 0) {
+         $noites = 1;
+        }
+
+        return $noites * (float) $alojamento->preco_noite;
+    }
+    
     public function user()
     {
         return $this->belongsTo(User::class);

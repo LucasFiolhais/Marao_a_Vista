@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue";
-import axios from "axiosFrontend";
+import axios from "@/axiosFrontend";
 import Navbar from "@/Components/NavBar.vue";
 
 const props = defineProps({
@@ -30,9 +30,9 @@ const verificarDisponibilidade = async () => {
   loading.value = true;
 
   try {
-    const res = await axios.post(`/api/reservas/available/${props.id}`, {
-      data_inicio: checkin.value,
-      data_fim: checkout.value,
+    const res = await axios.post(`/api/reservas/available/${alojamento_id}`, {
+      checkin: checkin.value,
+      checkout: checkout.value,
     });
 
     disponibilidade.value = res.data;
@@ -48,8 +48,8 @@ const criarReserva = async () => {
   try {
     const res = await axios.post("/api/reservas", {
       alojamento_id: props.id,
-      data_inicio: checkin.value,
-      data_fim: checkout.value,
+      checkin: checkin.value,
+      checkout: checkout.value,
     });
 
     // Ir para o checkout com o ID da reserva
@@ -123,7 +123,7 @@ const criarReserva = async () => {
         </p>
 
         <p class="text-lg font-bold mt-2">
-          Total: {{ disponibilidade.preco_total }} €
+          Total: {{ disponibilidade.total }} €
         </p>
 
         <button

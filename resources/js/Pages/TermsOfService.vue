@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue'
-import axiosInstance from '../axios' // Importa a configuração do Axios
+import axiosInstance from '@/axiosFrontend' // Importa a configuração do Axios
 
 // Propriedades vindas do Inertia
 defineProps({

@@ -24,21 +24,13 @@ class AlojamentoController extends Controller
     public function index()
 
     {
-
         // Buscar todos os alojamentos
-
-        $alojamentos = Alojamento::all(); // Você pode usar .get() ou outros métodos de consulta
-
-
-
-        // Retorna a página de alojamentos com os dados
+        //$alojamentos = Alojamento::all(); // Você pode usar .get() ou outros métodos de consulta
+        $alojamentos = Alojamento::with('fotos')->get();
 
         return Inertia::render('Alojamentos', [
-
             'alojamentos' => $alojamentos,
-
         ]);
-
     }
 
 
@@ -48,21 +40,15 @@ class AlojamentoController extends Controller
     public function show($id)
 
     {
-
         // Buscar o alojamento pelo ID
 
-        $alojamento = Alojamento::findOrFail($id);
+        //$alojamento = Alojamento::findOrFail($id);
 
-
-
-        // Retorna a página de detalhes do alojamento
+        $alojamento = Alojamento::with('fotos')->findOrFail($id);
 
         return Inertia::render('AlojamentoDetalhes', [
-
             'alojamento' => $alojamento,
-
         ]);
-
     }
 
 }
