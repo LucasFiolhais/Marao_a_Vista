@@ -33,7 +33,7 @@ class EasypayService
             "type" => "sale",
             "value" => (float) $reserva->total,
             "currency" => "EUR",
-            "method" => "mb",
+            "method" => "mbw",
             "customer" => [
                 "name"  => $reserva->user->name,
                 "email" => $reserva->user->email,
