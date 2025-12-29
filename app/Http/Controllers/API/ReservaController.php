@@ -46,9 +46,14 @@ class ReservaController extends Controller
         $data['user_id'] = auth()->id();
         $data['estado'] = 'pendente';
         $data['referencia'] = $this->gerarReferencia();
-        $data['preco_total'] = $this->calcularPreco($data['checkin'], $data['checkout'], $alojamento);
+        $data['total'] = $this->calcularPreco($data['checkin'], $data['checkout'], $alojamento->id);
+        //$data['total'] = 10.00;
 
         $reserva = Reserva::create($data);
+        \Log::info('AUTH CHECK', [
+            'check' => auth()->check(),
+            'id' => auth()->id(),
+        ]);
 
         return response()->json([
             'reserva' => $reserva->load(['alojamento']),
@@ -81,7 +86,7 @@ class ReservaController extends Controller
         }
 
         if (isset($data['checkin']) || isset($data['checkout'])) {
-            $data['preco_total'] = $this->calcularPreco($inicio, $fim, $reserva->alojamento);
+            $data['total'] = $this->calcularPreco($inicio, $fim, $reserva->alojamento);
         }
 
         $reserva->update($data);
@@ -174,7 +179,7 @@ class ReservaController extends Controller
     private function calcularPreco($inicio, $fim, $alojamento)
     {
         $dias = (new \DateTime($inicio))->diff(new \DateTime($fim))->days;
-        return $dias * ($alojamento->preco_noite ?? 100);
+        return $dias * ($alojamento->preco_noite ?? 40);
     }
 
     private function gerarReferencia()

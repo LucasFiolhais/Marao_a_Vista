@@ -22,49 +22,55 @@ class EasypayService
      */
     public function criarPagamento($reserva)
     {
-        $endpoint = "{$this->baseURL}/single";
+    $endpoint = "{$this->baseURL}/single";
 
-        try {
-            $response = Http::withHeaders([
-                'AccountId' => $this->accountId,
-                'ApiKey'    => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ])->post($endpoint, [
+    try {
+        $response = Http::withHeaders([
+            'AccountId' => $this->accountId,
+            'ApiKey'    => $this->apiKey,
+        ])->post($endpoint, [
+            "key" => "reserva-{$reserva->id}",
+            "type" => "sale",
+            "value" => (float) $reserva->total,
+            "currency" => "EUR",
+            "method" => "mbw",
+            "customer" => [
+                "name"  => $reserva->user->name,
+                "email" => $reserva->user->email,
+            ],
 
-                "key" => "reserva-{$reserva->id}",
-                "type" => "sale",
-                "value" => $reserva->preco_total,
-                "currency" => "EUR",
+            // SEM methods, SEM entity, SEM mbw
+            "sandbox" => true,
+        ]);
 
-                "customer" => [
-                    "name"  => $reserva->user->name,
-                    "email" => $reserva->user->email,
-                ],
-
-                // Ativa MULTIBANCO E MBWAY
-                "methods" => [
-                    "mb" => [
-                        "entity" => "11249",  // coloca a tua
-                        "subentity" => "000",
-                    ],
-                    "mbw" => [
-                        "phone" => null  // Utilizador introduz depois
-                    ],
-                ],
-
-                "sandbox" => true, // ok aqui
+        if ($response->failed()) {
+            \Log::error('EASYPAY RAW ERROR', [
+                'status' => $response->status(),
+                'body' => $response->body(),
             ]);
 
-            if ($response->failed()) {
-                return ['success' => false, 'error' => $response->json()];
-            }
-
-            return ['success' => true, 'data' => $response->json()];
-
-        } catch (\Throwable $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
+            return [
+                'success' => false,
+                'error' => $response->json()
+            ];
         }
+
+        return [
+            'success' => true,
+            'data' => $response->json()
+        ];
+
+    } catch (\Throwable $e) {
+        \Log::error('EASYPAY EXCEPTION', [
+            'message' => $e->getMessage()
+        ]);
+
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
     }
+}
 
     /**
      * Pedir MBWay após o utilizador inserir o número

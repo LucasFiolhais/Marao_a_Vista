@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Reserva;
 use App\Models\Pagamento;
@@ -22,39 +24,58 @@ class PaymentController extends Controller
      */
     public function checkout($reservaId)
     {
-        $reserva = Reserva::with('user')->findOrFail($reservaId);
+        
+        try {
+            Log::info('CHECKOUT START', [
+                'reservaId' => $reservaId,
+                'user_id' => auth()->id(),
+            ]);
 
-        if ($reserva->estado === 'confirmada') {
-            return response()->json(['message' => 'Reserva já paga.'], 400);
-        }
+            $reserva = Reserva::with('user')->findOrFail($reservaId);
 
-        // Criar pagamento na BD
-        $pagamento = Pagamento::create([
-            'reserva_id' => $reserva->id,
-            'valor' => $reserva->preco_total,
-            'estado' => 'pendente'
-        ]);
+            if ($reserva->estado === 'confirmada') {
+                return response()->json(['message' => 'Reserva já paga'], 400);
+            }
 
-        // Criar pagamento no Easypay
-        $result = $this->easypay->createPayment([
-            'id' => $pagamento->id,
-            'value' => $reserva->preco_total,
-            'description' => "Reserva #" . $reserva->id
-        ]);
+            $pagamento = new Pagamento();
+            $pagamento->reserva_id = $reserva->id;
+            $pagamento->valor = $reserva->total;
+            $pagamento->estado = 'pendente';
+            $pagamento->save();
 
-        if (!$result || !isset($result['key'], $result['url'])) {
+            \Log::info('ANTES DO EASYPAY');
+            $result = $this->easypay->criarPagamento($reserva);
+            \Log::info('DEPOIS DO EASYPAY', $result ?? []);
+
+            if (!$result['success']) {
+                Log::error('EASYPAY ERROR', $result);
+                return response()->json([
+                    'message' => 'Erro Easypay',
+                    'easypay_error' => $result['error'] ?? null,
+                ], 500);
+            }
+
             return response()->json([
-                'message' => 'Erro ao criar pagamento'
+                'payment_url' => $result['data']['url'] ?? null,
+            ]);
+
+        } 
+        catch (\Throwable $e) {
+            Log::error('CHECKOUT ERROR', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            //return response()->json(['message' => 'Erro interno'], 500);
+            return response()->json([
+                'message' => 'Exception Easypay',
+                'error' => $e->getMessage(),
             ], 500);
-        }
+        } 
 
-        // Guardar chave easypay
-        $pagamento->update([
-            'payment_key' => $result['key']
-        ]);
-
+        // Ajusta conforme resposta real do Easypay
         return response()->json([
-            'payment_url' => $result['url']
+            'payment_url' => $result['data']['url'] ?? null,
         ]);
     }
 

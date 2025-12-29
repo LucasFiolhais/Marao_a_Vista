@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ComentarioController;
 use App\Http\Controllers\Admin\ReservaController;
 use App\Http\Controllers\CompleteRegistrationController;
 
+
 /*
 |--------------------------------------------------------------------------
 | Páginas Públicas
