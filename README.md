@@ -4,7 +4,7 @@
 
 O **Marão à Vista** é uma aplicação web completa desenvolvida para modernizar a gestão de unidades de alojamento local na região do Marão. O projeto integra uma forte componente de **comunicação visual** (fotografia) com uma engenharia de software focada na **autonomia do gestor** e na facilidade de reserva para o hóspede.
 
-`Objetivos Técnicos`
+`Objetivos Técnicos`<br>
 **Arquitetura Moderna:** Implementar uma aplicação Single Page (SPA) utilizando **Vue 3** e **Inertia.js** para uma experiência de utilizador fluida.
 
 **Gestão em Tempo Real:** Criar um sistema de reservas dinâmico que comunica instantaneamente com o motor de base de dados para evitar conflitos de datas.
