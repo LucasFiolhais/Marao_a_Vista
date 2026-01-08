@@ -21,9 +21,9 @@ O **Marão à Vista** é uma aplicação web completa desenvolvida para moderniz
 
 **Painel Administrativo (Back-office):** Gestão total de alojamentos, utilizadores, preços e relatórios de ocupação.
 
-**Consumo de APIs Externas:** <br> **Meteo API:** Previsão meteorológica local integrada para os hóspedes. <br>
+**Consumo de APIs Externas:**  <br> -**Meteo API:** Previsão meteorológica local integrada para os hóspedes. <br>
 
-**Conversão de Moeda:** Atualização automática de taxas para clientes internacionais.
+-**Conversão de Moeda:** Atualização automática de taxas para clientes internacionais.
 
 **Design Responsivo:** Interface otimizada com **Tailwind CSS** para todos os dispositivos (Mobile, Tablet, Desktop).
 
